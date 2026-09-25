@@ -1,0 +1,564 @@
+/* Page chrome, the admin shell (sidebar) and the grid status hero. */
+
+/* ── Page chrome ────────────────────────────────────────────────────── */
+.ds-page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.ds-page--center {
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.ds-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-header__title {
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.ds-header__sub {
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.ds-header__aside {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.ds-header__titles {
+  min-width: 0;
+}
+
+/* Breadcrumb. Only `/admin/accounts/[id]` is two levels deep; it used to mark
+   itself as the Accounts page in the nav and offer no way up at all. */
+.ds-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-1);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.ds-crumb:hover {
+  color: var(--accent);
+}
+
+.ds-crumb__caret {
+  transform: rotate(180deg);
+}
+
+/* ── Admin shell ────────────────────────────────────────────────────────
+   The operator console's frame: a persistent rail plus the page beside it.
+
+   Before this there was no `app/admin/layout.tsx` at all — every page built
+   its own chrome by rendering the nav component, so navigation re-mounted on
+   every route change and nothing could hold live state across one. The rail
+   exists so the section nav, the gateway status and the count badges are the
+   same object on all five screens rather than five copies of it.
+
+   Three widths, not two. Between 700 and 1100 the rail keeps its icons and
+   drops its words: at that size a 248px rail is a third of the viewport, but
+   removing it entirely costs the operator the gateway indicator, which is the
+   one thing on this screen they cannot afford to stop seeing.
+   ────────────────────────────────────────────────────────────────────── */
+.ds-shell {
+  display: flex;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+.ds-shell__main {
+  flex: 1;
+  /* Recharts' ResponsiveContainer ratchets its track wider on every resize
+     without this — the same reason `.ds-grid > *` carries it. */
+  min-width: 0;
+}
+
+.ds-sidebar {
+  position: sticky;
+  top: 0;
+  flex: none;
+  width: var(--rail-w);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-5) var(--sp-4);
+  background: var(--surface);
+  /* A hairline, not `--e1`: the rail runs the full height of the viewport, so
+     a drop shadow along it reads as a seam rather than a lift. */
+  border-right: 1px solid var(--border);
+}
+
+.ds-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-1) var(--sp-2);
+}
+
+/* The mark. A violet disc with a lime quadrant — the brand pair, at the size
+   where two colours is all a logo can carry. */
+.ds-sidebar__mark {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  background: linear-gradient(140deg, var(--accent) 55%, var(--ok-solid) 55%);
+}
+
+.ds-sidebar__wordmark {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.ds-sidebar__wordmark span {
+  font-size: var(--fs-2xs);
+  font-weight: 400;
+  color: var(--text-faint);
+  letter-spacing: 0;
+}
+
+.ds-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ds-navitem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 38px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.ds-navitem:hover {
+  background: var(--hover-wash);
+  color: var(--text);
+}
+
+.ds-navitem--active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.ds-navitem__icon {
+  flex: none;
+}
+
+.ds-navitem__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ds-navitem__count {
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-navitem--active .ds-navitem__count {
+  color: var(--accent);
+}
+
+/* Accounts waiting for approval. A dot rather than a number: the count is
+   already on the row, and this says "act on it" instead of "how many". */
+.ds-navitem__flag {
+  position: absolute;
+  top: 9px;
+  left: 26px;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-full);
+  background: var(--sev-warning);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.ds-sidebar__status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: auto;
+  padding: var(--sp-3);
+  background: var(--surface-2);
+  border-radius: var(--r);
+}
+
+.ds-sidebar__statrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 24px;
+  font-size: var(--fs-xs);
+}
+
+.ds-sidebar__statlabel {
+  color: var(--text-muted);
+}
+
+.ds-sidebar__statvalue {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-sidebar__statsub {
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+.ds-sidebar__foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.ds-sidebar__user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding-left: var(--sp-2);
+}
+
+.ds-sidebar__username {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+/* The narrow-screen bar. Hidden until the rail goes off-canvas.
+
+   `fixed`, not `sticky`: this renders inside `.ds-shell`, which is a flex row,
+   and a sticky element is still in flow — so it laid out as a *column beside*
+   the page instead of a bar above it. Taking it out of flow is what keeps the
+   shell a two-child row at every width. `.ds-shell__main` pays for it with top
+   padding at the same breakpoint. */
+.ds-topbar {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  background: color-mix(in srgb, var(--canvas) 85%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-topbar__brand {
+  flex: 1;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ds-topbar__dots {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+.ds-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background: var(--scrim);
+  backdrop-filter: blur(4px);
+  animation: ds-fade 160ms ease-out;
+}
+
+@media (max-width: 1100px) {
+  .ds-sidebar {
+    width: var(--rail-w-collapsed);
+    padding: var(--sp-5) var(--sp-2);
+    align-items: center;
+  }
+
+  /* Words go, glyphs stay. Each row keeps a `title` in the markup, so the
+     label is still reachable on hover. */
+  .ds-sidebar__wordmark,
+  .ds-navitem__label,
+  .ds-navitem__count,
+  .ds-sidebar__statlabel,
+  .ds-sidebar__statvalue,
+  .ds-sidebar__username {
+    display: none;
+  }
+
+  .ds-navitem {
+    justify-content: center;
+    padding: 0;
+    width: 44px;
+  }
+
+  .ds-navitem__flag {
+    left: 27px;
+    top: 7px;
+  }
+
+  .ds-sidebar__brand,
+  .ds-sidebar__user {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .ds-sidebar__status {
+    padding: var(--sp-2);
+    background: none;
+  }
+
+  .ds-sidebar__statrow {
+    justify-content: center;
+  }
+
+  /* Icon-only appearance control stacks rather than sitting in a row — three
+     pills side by side do not fit a 68px rail. */
+  .ds-segment--icons {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+  }
+
+  .ds-segment--icons::after {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .ds-topbar {
+    display: flex;
+  }
+
+  /* Clears the fixed bar above. */
+  .ds-shell__main {
+    padding-top: 52px;
+  }
+
+  .ds-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    width: var(--rail-w);
+    padding: var(--sp-5) var(--sp-4);
+    align-items: stretch;
+    transform: translateX(-100%);
+    transition: transform var(--t);
+    box-shadow: var(--e3);
+  }
+
+  .ds-sidebar--open {
+    transform: none;
+  }
+
+  /* Open, it is the full rail again — the reason to open it is to read it. */
+  .ds-sidebar--open .ds-sidebar__wordmark,
+  .ds-sidebar--open .ds-navitem__label,
+  .ds-sidebar--open .ds-navitem__count,
+  .ds-sidebar--open .ds-sidebar__statlabel,
+  .ds-sidebar--open .ds-sidebar__statvalue,
+  .ds-sidebar--open .ds-sidebar__username {
+    display: initial;
+  }
+
+  .ds-sidebar--open .ds-navitem {
+    justify-content: flex-start;
+    padding: 0 var(--sp-3);
+    width: auto;
+  }
+
+  .ds-sidebar--open .ds-navitem__flag {
+    left: 26px;
+    top: 9px;
+  }
+
+  .ds-sidebar--open .ds-sidebar__brand,
+  .ds-sidebar--open .ds-sidebar__user {
+    justify-content: space-between;
+    padding-left: var(--sp-2);
+  }
+
+  .ds-sidebar--open .ds-sidebar__status {
+    padding: var(--sp-3);
+    background: var(--surface-2);
+  }
+
+  .ds-sidebar--open .ds-sidebar__statrow {
+    justify-content: space-between;
+  }
+
+  .ds-sidebar--open .ds-segment--icons {
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+  }
+
+  .ds-sidebar--open .ds-segment--icons::after {
+    display: block;
+  }
+}
+
+/* ── Grid status hero ───────────────────────────────────────────────────
+   The Control Room's anchor. Six gauges say what each parameter is doing;
+   none of them says whether that adds up to a problem, and working it out
+   meant reading all six against trip points held in your head.
+
+   Tinted by level rather than bordered, the same idiom `.ds-verdict` uses on
+   the consumer side — this is that block's operator twin, and the two should
+   read as the same kind of statement.
+   ────────────────────────────────────────────────────────────────────── */
+.ds-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-5);
+  padding: var(--sp-6);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--e1);
+}
+
+.ds-hero--stable {
+  background: var(--ok-soft);
+  box-shadow: none;
+}
+
+.ds-hero--watch {
+  background: var(--sev-warning-soft);
+  box-shadow: none;
+}
+
+.ds-hero--strained {
+  background: var(--sev-critical-soft);
+  box-shadow: none;
+}
+
+.ds-hero--contingency {
+  background: var(--sev-emergency-soft);
+  box-shadow: none;
+}
+
+.ds-hero--unknown {
+  background: var(--surface-2);
+  box-shadow: none;
+}
+
+.ds-hero__main {
+  min-width: 0;
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.ds-hero__label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.ds-hero__headline {
+  font-size: var(--fs-3xl);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.ds-hero__detail {
+  max-width: 60ch;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.ds-hero__cause {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Run state. Right-hand column on a wide screen, its own row below the
+   headline when there is no space for both. */
+.ds-hero__run {
+  flex: 0 1 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.ds-hero__tick {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-hero__tick span {
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.ds-hero__stamp {
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-hero__run /* Half height, for a bar that is a readout rather than the subject — the
+   hero's run progress sits under a figure that already states it. */
+.ds-progress--slim {
+  height: 4px;
+}
+
+.ds-progress {
+  width: 100%;
+}

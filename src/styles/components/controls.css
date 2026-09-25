@@ -1,0 +1,708 @@
+/* Toolbar, range, rows, grids, charts, modal, slide-over, segment, tuner, verdict, ledger, progress. */
+
+/* ── Toolbar ────────────────────────────────────────────────────────── */
+.ds-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e1);
+}
+
+/* Run state, pushed to the end of the control strip so the controls read as a
+   group and the state reads as a caption on them. */
+.ds-toolbar__status {
+  margin-left: auto;
+}
+
+@media (max-width: 900px) {
+  .ds-toolbar__status {
+    margin-left: 0;
+    width: 100%;
+    padding-top: var(--sp-2);
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* ── Range ──────────────────────────────────────────────────────────── */
+.ds-range-group {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.ds-range-group__label {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.ds-range-group__value {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  min-width: 48px;
+}
+
+.ds-range {
+  appearance: none;
+  width: 120px;
+  height: 4px;
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+  cursor: pointer;
+}
+
+.ds-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-full);
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.ds-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: var(--r-full);
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.ds-range--wide {
+  width: 100%;
+}
+
+/* ── Link chip ──────────────────────────────────────────────────────── */
+.ds-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-full);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.ds-link:hover {
+  background: var(--hover-wash);
+  color: var(--text);
+}
+
+.ds-link--active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Row ────────────────────────────────────────────────────────────── */
+.ds-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-sm);
+  min-height: var(--row-h);
+}
+
+.ds-row--last,
+.ds-row:last-child {
+  border-bottom: none;
+}
+
+.ds-row__mono {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+/* ── Grids ──────────────────────────────────────────────────────────── */
+.ds-grid {
+  display: grid;
+  gap: var(--gap);
+}
+
+.ds-grid--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.ds-grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* The six live gauges, one row on a console-width screen. */
+.ds-grid--6 {
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--sp-3);
+}
+
+/* Feed beside charts. The feed is wider because it is the half with actions
+   on it; the charts only have to be legible. */
+.ds-grid--feed {
+  grid-template-columns: 1.35fr 1fr;
+  align-items: start;
+}
+
+/* Always 2- and 3-up regardless of viewport. These live inside the
+   fixed-width consumer column, so a media query would be measuring the
+   browser window rather than the box they are actually in — which is how a
+   three-tile row ends up rendering as two-then-one on a phone. */
+.ds-grid--pair {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.ds-grid--triple {
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+}
+
+.ds-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.ds-stack--sm {
+  gap: var(--sp-2);
+}
+
+/* LOAD-BEARING. Grid and flex children default to min-width:auto, which lets
+   a Recharts ResponsiveContainer ratchet its track wider on every resize and
+   never give the width back. Without this the whole page scrolls sideways. */
+.ds-grid > *,
+.ds-stack > * {
+  min-width: 0;
+}
+
+/* A stacked child sizes to its content and never gets squeezed.
+
+   `.ds-stack` is a flex column, so its children default to `flex-shrink: 1` —
+   and inside a height-capped parent (`.ds-card--scroll`, max-height 520) forty
+   alert rows shrank to about 3px each. They were still there, still had their
+   text, and still had their severity rail, which is what made it read as a
+   striped panel rather than as broken. The card is the thing that scrolls;
+   the rows are not the thing that gives way. */
+.ds-stack > * {
+  flex-shrink: 0;
+}
+
+/* ── Charts ─────────────────────────────────────────────────────────── */
+.ds-chart {
+  padding: var(--sp-4) var(--sp-3) var(--sp-2);
+}
+
+.ds-chart .ds-title {
+  padding: 0 var(--sp-2);
+}
+
+/* Recharts sets its tooltip styles inline, so overriding needs !important. */
+.ds-tooltip {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r) !important;
+  box-shadow: var(--e2) !important;
+  font-size: var(--fs-xs) !important;
+  padding: var(--sp-2) var(--sp-3) !important;
+  color: var(--text) !important;
+}
+
+/* ── Readout ────────────────────────────────────────────────────────── */
+.ds-readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.ds-readout__item {
+  font-size: var(--fs-2xs);
+  padding: 3px var(--sp-2);
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+}
+
+/* ── Statusline ─────────────────────────────────────────────────────── */
+.ds-statusline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+/* The phase, as a coloured dot beside its word. It used to be a bordered
+   uppercase chip, which gave the least changeable fact in the strip the
+   loudest treatment in it. */
+.ds-statusline__state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.ds-statusline__state::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-full);
+  background: var(--text-faint);
+}
+
+.ds-statusline__state--running {
+  color: var(--ok);
+}
+.ds-statusline__state--running::before {
+  background: var(--ok);
+}
+
+.ds-statusline__state--paused {
+  color: var(--sev-warning);
+}
+.ds-statusline__state--paused::before {
+  background: var(--sev-warning);
+}
+
+.ds-statusline__state--finished {
+  color: var(--sev-info);
+}
+.ds-statusline__state--finished::before {
+  background: var(--sev-info);
+}
+
+.ds-statusline__sep {
+  color: var(--border-strong);
+}
+
+/* ── Modal ──────────────────────────────────────────────────────────── */
+.ds-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  background: var(--scrim);
+  backdrop-filter: blur(8px);
+  animation: ds-fade 160ms ease-out;
+}
+
+.ds-modal__panel {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  box-shadow: var(--e3);
+  padding: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  animation: ds-pop 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.ds-modal__title {
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.ds-modal__body {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.ds-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+@keyframes ds-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ds-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Slide-over ─────────────────────────────────────────────────────── */
+/* A panel that arrives from the right edge, for a settings surface that is
+   too big for a modal and too incidental for a page of its own. */
+.ds-sheet-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--scrim);
+  backdrop-filter: blur(8px);
+  animation: ds-fade 160ms ease-out;
+}
+
+.ds-sheet-panel__body {
+  width: 100%;
+  max-width: 420px;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--canvas);
+  box-shadow: var(--e3);
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  animation: ds-slide-in 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.ds-sheet-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+@keyframes ds-slide-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ── Disclosure ─────────────────────────────────────────────────────── */
+.ds-details {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e1);
+  overflow: hidden;
+}
+
+.ds-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-4);
+  min-height: var(--row-h);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  list-style: none;
+  transition: background var(--t-fast);
+}
+
+.ds-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ds-details > summary:hover {
+  background: var(--hover-wash);
+}
+
+.ds-details > summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--text-faint);
+  border-bottom: 1.5px solid var(--text-faint);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--t-fast);
+}
+
+.ds-details[open] > summary::after {
+  transform: rotate(225deg) translate(-2px, -2px);
+}
+
+.ds-details[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-details__body {
+  padding: var(--sp-4);
+}
+
+/* ── Segment ────────────────────────────────────────────────────────── */
+/* The selected pill slides between options rather than blinking on and off.
+   `--n` (option count) and `--i` (selected index) are set inline by the
+   component — the one case where an inline style is unavoidable, same as a
+   progress bar's width. */
+.ds-segment {
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 2px;
+  background: var(--surface-2);
+  border-radius: var(--r-full);
+}
+
+.ds-segment::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / var(--n, 3));
+  transform: translateX(calc(100% * var(--i, 0)));
+  background: var(--surface);
+  border-radius: var(--r-full);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform var(--t);
+}
+
+.ds-segment__btn {
+  position: relative;
+  z-index: 1;
+  padding: var(--sp-1) var(--sp-4);
+  background: transparent;
+  border: none;
+  border-radius: var(--r-full);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--t-fast);
+}
+
+.ds-segment__btn:hover {
+  color: var(--text);
+}
+
+.ds-segment__btn[aria-pressed="true"] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.ds-title > .ds-segment {
+  margin-left: auto;
+}
+
+/* Icon-only segment, for the appearance control in the rail. */
+.ds-segment--icons .ds-segment__btn {
+  padding: var(--sp-1) var(--sp-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* A count riding inside a segment button — how much work the other half of
+   the filter is hiding. */
+.ds-segment__count {
+  margin-left: var(--sp-1);
+  padding: 0 5px;
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The feed card's header controls: the filter, then the way out to the full
+   history. Two separate targets, so the head itself is not the link here —
+   unlike every other `ds-card--strip`. */
+.ds-feedbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.ds-card__meta--link {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ds-card__meta--link:hover {
+  text-decoration: underline;
+}
+
+/* ── Threshold tuner ────────────────────────────────────────────────── */
+.ds-tune__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.ds-tune__name {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.ds-tune__value {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ds-tune__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-tune__live--hot {
+  color: var(--sev-warning);
+  font-weight: 600;
+}
+
+/* ── Verdict ────────────────────────────────────────────────────────── */
+.ds-verdict {
+  padding: var(--sp-6);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--e1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.ds-verdict--good {
+  background: var(--ok-soft);
+  box-shadow: none;
+}
+
+.ds-verdict--ease {
+  background: var(--sev-warning-soft);
+  box-shadow: none;
+}
+
+.ds-verdict--cut {
+  background: var(--sev-emergency-soft);
+  box-shadow: none;
+}
+
+.ds-verdict--unknown {
+  background: var(--surface-2);
+  box-shadow: none;
+}
+
+.ds-verdict__label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.ds-verdict__headline {
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.ds-verdict__detail {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Which parameter put the grid in this state. A verdict says what to do; a
+   household that is being asked to change its behaviour is owed the reason. */
+.ds-verdict__cause {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* ── Ledger ─────────────────────────────────────────────────────────── */
+.ds-ledger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-ledger:last-child {
+  border-bottom: none;
+}
+
+.ds-ledger__what {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.ds-ledger__when {
+  display: block;
+  margin-top: 1px;
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.ds-ledger__amount {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Progress ───────────────────────────────────────────────────────── */
+.ds-progress {
+  height: 8px;
+  background: var(--surface-3);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+
+/* Lime, not violet. This bar is the household's *result* — the share of what
+   they were asked for that they actually captured — and the positive token is
+   what says so. Violet is chrome; it would make an achievement look like a
+   loading bar. The hero's run progress overrides this back to the accent,
+   because a simulation tick is chrome. */
+.ds-progress__fill {
+  height: 100%;
+  background: var(--ok-solid);
+  border-radius: var(--r-full);
+  transition: width var(--t);
+}
+
+.ds-progress--slim .ds-progress__fill {
+  background: var(--accent);
+}
+
+.ds-progress-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  margin-top: var(--sp-2);
+}

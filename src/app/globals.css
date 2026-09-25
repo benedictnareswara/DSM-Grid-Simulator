@@ -1,0 +1,78 @@
+/*
+ * Styling: Tailwind v4 over the DSM design system.
+ *
+ * - src/styles/tokens.css holds every colour and size, in light and dark.
+ *   `@theme inline` below exposes them as Tailwind utilities (bg-surface,
+ *   text-muted, border-hairline, rounded-card, shadow-e1, ...), which follow
+ *   the active scheme automatically.
+ * - The reusable pieces (cards, buttons, alerts, tables) are `ds-*` component
+ *   classes in src/styles/components, layered below the utilities so a
+ *   utility on an element always wins.
+ * - Tailwind's preflight reset is left out on purpose: the design system has
+ *   its own (src/styles/base.css) and the look depends on it.
+ *
+ * Rules the look rests on: surfaces have no border (contrast and a soft shadow
+ * separate them), air over density, hierarchy from size and weight rather than
+ * uppercase, and every figure uses tabular numbers.
+ */
+
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@import "../styles/tokens.css" layer(base);
+@import "../styles/base.css" layer(base);
+@import "../styles/components/primitives.css" layer(components);
+@import "../styles/components/shell.css" layer(components);
+@import "../styles/components/auth.css" layer(components);
+@import "../styles/components/controls.css" layer(components);
+@import "../styles/components/consumer.css" layer(components);
+@import "../styles/components/tables.css" layer(components);
+@import "../styles/components/overrides.css" layer(components);
+
+/* Dark mode follows data-theme (set before first paint), not the OS, so the
+   in-app theme switch works. `dark:` utilities use the same attribute. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-on-accent: var(--text-on-accent);
+  --color-hairline: var(--border);
+  --color-hairline-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-border: var(--accent-border);
+  --color-info: var(--sev-info);
+  --color-info-soft: var(--sev-info-soft);
+  --color-warning: var(--sev-warning);
+  --color-warning-soft: var(--sev-warning-soft);
+  --color-critical: var(--sev-critical);
+  --color-critical-soft: var(--sev-critical-soft);
+  --color-emergency: var(--sev-emergency);
+  --color-emergency-soft: var(--sev-emergency-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-ok-solid: var(--ok-solid);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --radius-sm: var(--r-sm);
+  --radius-card: var(--r);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+
+  --shadow-e1: var(--e1);
+  --shadow-e2: var(--e2);
+  --shadow-e3: var(--e3);
+
+  --font-sans: var(--font);
+  --font-mono: var(--mono);
+}

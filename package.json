@@ -1,0 +1,55 @@
+{
+  "name": "dsm-grid-simulator",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Demand-Side Management grid simulator: replays household power data, alerts households when the grid is stressed, and throttles a real load through two ESP32 boards.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "setup": "tsx scripts/setup.ts",
+    "dev": "tsx server.ts",
+    "build": "next build",
+    "start": "tsx server.ts --production",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "data:full": "tsx scripts/fetch-dataset.ts",
+    "flash:gateway": "tsx scripts/pio.ts run -e gateway -t upload",
+    "flash:lcu": "tsx scripts/pio.ts run -e lcu -t upload",
+    "monitor:gateway": "tsx scripts/pio.ts device monitor -e gateway",
+    "monitor:lcu": "tsx scripts/pio.ts device monitor -e lcu",
+    "build:firmware": "tsx scripts/pio.ts run"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "bonjour-service": "^1.4.4",
+    "drizzle-orm": "^0.45.3",
+    "jose": "^6.2.12",
+    "next": "16.3.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "recharts": "^3.10.1",
+    "tsx": "^4.23.15",
+    "ws": "^8.21.3",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
+    "drizzle-kit": "^0.31.11",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.6",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.2"
+  }
+}

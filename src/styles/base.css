@@ -1,0 +1,97 @@
+/* Reset, typography defaults, focus ring and scrollbar. */
+
+/* ── Reset ──────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--canvas);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  font-size: var(--fs-md);
+  letter-spacing: -0.01em;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+/* Anything that states a measured quantity. Grouped here rather than repeated
+   on thirty classes: a figure that reflows as it ticks is unreadable. Note
+   these are *not* monospace — a proportional face with tabular figures reads
+   as a number in a product, where mono reads as a number in a terminal. */
+.ds-metric__value,
+.ds-table__num,
+.ds-row__mono,
+.ds-tile__value,
+.ds-readout__item,
+.ds-score,
+.ds-statusline,
+.ds-ledger__amount,
+.ds-range-group__value,
+.ds-badge--count,
+.ds-progress-legend {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Mono survives for identifiers only — an alert id, a raw timestamp, an
+   audit action verb. Things you compare character by character. */
+.ds-table__mono,
+.ds-alert__time,
+.ds-card__meta,
+.ds-step__value {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--r-full);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+  background-clip: content-box;
+}

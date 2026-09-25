@@ -1,0 +1,222 @@
+/* Design tokens: every colour, size and timing, light and dark. The only file that names a colour.
+   Both schemes are chosen by `data-theme` on <html>, which an inline script in
+   src/app/layout.tsx sets before first paint. Add a colour to BOTH blocks. */
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Canvas and surfaces. Neutral with the faintest violet cast, so the greys
+     sit under the brand hue rather than fighting it. */
+  --canvas: #f7f7fa;
+  --surface: #ffffff;
+  --surface-2: #f1f1f6;
+  --surface-3: #e6e6ee;
+
+  /* Text ramp. All three clear 4.5:1 on --surface. */
+  --text: #16161d;
+  --text-muted: #5c5c6b;
+  --text-faint: #6f6f80;
+  --text-on-accent: #ffffff;
+
+  /* Lines. `--border` is a hairline *inside* a surface; `--border-strong`
+     is for controls that need an edge of their own (inputs, buttons). */
+  --border: #e6e6ee;
+  --border-strong: #c9c9d6;
+
+  /* Brand. Violet is chosen for what it is *not*: it sits clear of the whole
+     severity ramp below, so a primary button can never be mistaken for a
+     grid condition. Do not move it toward blue. */
+  --accent: #6d5ae6;
+  --accent-hover: #5b48d4;
+  --accent-soft: #efebff;
+  --accent-border: #d6ccfa;
+
+  /* Severity. `-soft` is the fill, the base is the text and the rail,
+     `-border` is the edge where one is still needed. Each base clears
+     4.5:1 on its own soft fill.
+
+     Info is cyan rather than blue on purpose. Blue sits one step from the
+     violet chrome, and at a glance an info chip read as "branded" rather
+     than "lowest severity". Cyan makes the four a temperature ramp —
+     cyan, amber, orange, red — that is legible in one pass. */
+  --sev-info: #0e7490;
+  --sev-info-soft: #e6f6fb;
+  --sev-info-border: #b8e3ef;
+  --sev-warning: #b45309;
+  --sev-warning-soft: #fdf2e4;
+  --sev-warning-border: #efd9b8;
+  --sev-warning-dim: #8a6224;
+  --sev-critical: #c2410c;
+  --sev-critical-soft: #fdece2;
+  --sev-critical-border: #f2cdb6;
+  --sev-emergency: #b91c1c;
+  --sev-emergency-soft: #fdebeb;
+  --sev-emergency-border: #f2c4c4;
+
+  /* Status. `--ok` is split in two because it does two incompatible jobs:
+     it is *text* on a light tint (.ds-badge--live, .ds-tag--ok, .ds-outcome)
+     and it is a *solid fill* under text (.ds-btn--accept). Lime is far too
+     light for the first — #a3e635 on white is about 1.9:1 — so the readable
+     green carries the text role and the vivid lime carries the fill role,
+     with its own ink. Reach for `--ok` unless you are filling a shape. */
+  --ok: #4d7c0f;
+  --ok-hover: #3f6a0b;
+  --ok-soft: #f2fbe3;
+  --ok-border: #d6efa8;
+  --danger: #b91c1c;
+  --danger-soft: #fdebeb;
+  --danger-border: #f2c4c4;
+
+  /* Elevation. `--e1` is the card default and does the job a 1px border
+     used to. In dark it becomes a hairline ring instead — a shadow is
+     invisible on near-black, so the same token has to carry separation a
+     different way. */
+  --e1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --e2: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --e3: 0 12px 40px rgba(0, 0, 0, 0.16);
+
+  /* Overlays */
+  --scrim: rgba(0, 0, 0, 0.4);
+  --hover-wash: rgba(16, 16, 29, 0.05);
+
+  /* Radius */
+  --r-sm: 8px;
+  --r: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-full: 999px;
+
+  /* Type scale */
+  --fs-2xs: 0.6875rem;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1.0625rem;
+  --fs-xl: 1.3125rem;
+  --fs-2xl: 1.625rem;
+  --fs-3xl: 2.125rem;
+  --fs-4xl: 2.75rem;
+
+  /* Spacing */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-10: 56px;
+
+  /* Density — overridden per scope, see below. Defaults are the roomy set. */
+  --pad-card: 24px;
+  --row-h: 44px;
+  --gap: 16px;
+
+  /* Motion */
+  --t-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t: 240ms cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* The consumer app is one fixed column at every viewport. */
+  --app-w: 460px;
+
+  /* Admin shell. The rail widths the sidebar and its main column share. */
+  --rail-w: 248px;
+  --rail-w-collapsed: 68px;
+
+  --font: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+/* Scheme-independent tokens.
+   These are declared once because they are identical in both schemes — the
+   lime fill is vivid enough to carry itself on either canvas, and its ink is
+   dark in both (11:1). Everything else that touches colour belongs in *both*
+   blocks; a value that appears in only one is a scheme-specific bug that will
+   not show up until someone switches. */
+:root {
+  --ok-solid: #a3e635;
+  --ok-solid-hover: #b8ee5f;
+  --ok-ink: #1a2e05;
+}
+
+/* The operator console packs more rows into a screen. Scoping the density to
+   custom properties means no component needs a `--dense` variant. */
+.ds-page[data-density="dense"] {
+  --pad-card: 16px;
+  --row-h: 34px;
+  --gap: 12px;
+  --fs-md: 0.875rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Dark
+   ═══════════════════════════════════════════════════════════════════════
+
+   Nothing but token values. If a component rule needs editing to work in
+   dark, the rule is carrying a colour it should have taken from a token.
+
+   Two things genuinely change shape rather than value:
+     - `--e1` becomes a hairline ring. A drop shadow is invisible on black,
+       so the token that separates a card from the canvas has to do it with
+       a line instead — which is why every surface reads `--e1` rather than
+       declaring its own border.
+     - The severity and status `-soft` fills become alpha washes of their
+       own hue. The light tints are near-white and do not survive
+       inversion; an alpha wash sits correctly on whatever is behind it.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --canvas: #0b0b10;
+  --surface: #15151c;
+  --surface-2: #1e1e27;
+  --surface-3: #2a2a35;
+
+  --text: #f2f2f7;
+  --text-muted: #a3a3b2;
+  --text-faint: #8686a0;
+  --text-on-accent: #ffffff;
+
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+
+  --accent: #9b87ff;
+  --accent-hover: #b3a3ff;
+  --accent-soft: rgba(155, 135, 255, 0.18);
+  --accent-border: rgba(155, 135, 255, 0.4);
+
+  --sev-info: #4dd0e8;
+  --sev-info-soft: rgba(77, 208, 232, 0.16);
+  --sev-info-border: rgba(77, 208, 232, 0.34);
+  --sev-warning: #f0a94a;
+  --sev-warning-soft: rgba(240, 169, 74, 0.16);
+  --sev-warning-border: rgba(240, 169, 74, 0.34);
+  --sev-warning-dim: #d0a06a;
+  --sev-critical: #ff8a5c;
+  --sev-critical-soft: rgba(255, 138, 92, 0.16);
+  --sev-critical-border: rgba(255, 138, 92, 0.34);
+  --sev-emergency: #ff6b6b;
+  --sev-emergency-soft: rgba(255, 107, 107, 0.16);
+  --sev-emergency-border: rgba(255, 107, 107, 0.34);
+
+  /* Dark inverts which half of the ok pair is readable: here the lime *is*
+     legible as text on a near-black surface, so --ok and --ok-solid converge.
+     They stay separate tokens because light needs them apart. */
+  --ok: #a3e635;
+  --ok-hover: #b8ee5f;
+  --ok-soft: rgba(163, 230, 53, 0.16);
+  --ok-border: rgba(163, 230, 53, 0.34);
+  --danger: #ff6b6b;
+  --danger-soft: rgba(255, 107, 107, 0.16);
+  --danger-border: rgba(255, 107, 107, 0.34);
+
+  --e1: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --e2: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --e3: 0 16px 48px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+
+  --scrim: rgba(0, 0, 0, 0.65);
+  --hover-wash: rgba(255, 255, 255, 0.06);
+}

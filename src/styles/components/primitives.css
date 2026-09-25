@@ -1,0 +1,902 @@
+/* Primitives: card, list, type, button, badge, metric, field, notice, switch, alert, tag, chips. */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Primitives
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Card ───────────────────────────────────────────────────────────── */
+/* No border. The card is lighter than the canvas and casts `--e1`; that is
+   the whole separation. A 1px line on top of both is the belt-and-braces
+   look this system is moving away from. */
+.ds-card {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e1);
+  padding: var(--pad-card);
+}
+
+.ds-card--tint {
+  background: var(--surface-2);
+  box-shadow: none;
+}
+
+.ds-card--pad-sm {
+  padding: var(--sp-4);
+}
+
+/* A card whose heading is a band rather than a line of text. This is the ONE
+   card-heading system — the old code also had a `.ds-title` floating above a
+   card, chosen ad hoc, so two cards side by side could be titled two ways.
+   `.ds-title` survives only for page-level section headings. */
+.ds-card--strip {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ds-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--pad-card);
+  border-bottom: 1px solid var(--border);
+  min-height: var(--row-h);
+}
+
+.ds-card__title {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.ds-card__meta {
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+}
+
+.ds-card__body {
+  padding: var(--pad-card);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* A body that is a list of rows rather than free content — the rows supply
+   their own vertical rhythm, so the card only pads the sides. */
+.ds-card__body--rows {
+  padding: 0 var(--pad-card);
+}
+
+/* The header strip is the link, never the whole card — the bodies carry Push,
+   Ignore, Approve and Delete, so a card-wide target would sit under all of
+   them and nest interactive elements inside an anchor. */
+a.ds-card__head {
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--t-fast);
+}
+
+a.ds-card__head:hover {
+  background: var(--hover-wash);
+}
+
+/* ── Grouped list ───────────────────────────────────────────────────── */
+/* One rounded surface, hairline-separated rows, no outer border — the
+   iOS Settings shape. Anything that is "a list of labelled facts or
+   actions" belongs in one of these rather than in a stack of little
+   bordered boxes, which is what a metric grid degenerates into when the
+   things in it aren't actually measurements. */
+.ds-group {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e1);
+  overflow: hidden;
+}
+
+.ds-group__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--pad-card);
+  min-height: var(--row-h);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-sm);
+}
+
+.ds-group__row:last-child {
+  border-bottom: none;
+}
+
+.ds-group__label {
+  color: var(--text-muted);
+  min-width: 0;
+}
+
+.ds-group__value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Nested inside a card that already supplies a surface and padding. Without
+   this the group inherits `--pad-card` on top of the card's own, so a two-word
+   label wraps inside a box with 48px of horizontal air — and a white group on
+   a white card reads as a stray outline rather than as a grouping. */
+.ds-card .ds-group,
+.ds-details__body .ds-group {
+  background: var(--surface-2);
+  box-shadow: none;
+  border-radius: var(--r);
+}
+
+.ds-card .ds-group__row,
+.ds-details__body .ds-group__row {
+  padding: var(--sp-2) var(--sp-3);
+}
+
+/* ── Typography ─────────────────────────────────────────────────────── */
+.ds-title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin-bottom: var(--sp-3);
+}
+
+.ds-title__meta {
+  font-size: var(--fs-sm);
+  letter-spacing: 0;
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+/* A quiet label above a block. Sentence case, not the uppercase-tracked
+   idiom this replaced — see rule 3 in the header. */
+.ds-eyebrow {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+/* A run of buttons under a card body. */
+.ds-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+/* Inline in a row rather than under a card body — no top margin. */
+.ds-actions--tight {
+  margin-top: 0;
+  gap: var(--sp-1);
+}
+
+.ds-eyebrow--spaced {
+  margin-top: var(--sp-4);
+  margin-bottom: var(--sp-1);
+}
+
+.ds-muted {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+}
+
+.ds-muted--xs {
+  font-size: var(--fs-2xs);
+}
+
+/* A name that links to its own record. Used in every table's first column. */
+.ds-link-strong {
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.ds-link-strong:hover {
+  text-decoration: underline;
+}
+
+/* The text half of a two-part row that must not push its sibling off-screen. */
+.ds-flex-1 {
+  flex: 1;
+  min-width: 0;
+}
+
+/* A card whose body scrolls rather than growing without limit. Height is a
+   token, not a per-card literal — the feed and the audit trail were 520 and
+   420 for no stated reason. */
+.ds-card--scroll {
+  max-height: 520px;
+}
+
+.ds-empty {
+  text-align: center;
+  padding: var(--sp-8) var(--sp-4);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.ds-empty strong {
+  display: block;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin-bottom: var(--sp-2);
+}
+
+/* ── Button ─────────────────────────────────────────────────────────── */
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 36px;
+  padding: 0 var(--sp-4);
+  background: var(--surface-2);
+  color: var(--text);
+  border: none;
+  border-radius: var(--r-full);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--t-fast), opacity var(--t-fast),
+    transform var(--t-fast);
+}
+
+.ds-btn:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+
+.ds-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ds-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ds-btn--primary {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 600;
+}
+
+.ds-btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+/* The solid half of the ok pair, with the ink that goes on it. Unconditional
+   in both schemes — see the --ok-solid note in the token block. */
+.ds-btn--accept {
+  background: var(--ok-solid);
+  color: var(--ok-ink);
+  font-weight: 600;
+}
+
+.ds-btn--accept:hover:not(:disabled) {
+  background: var(--ok-solid-hover);
+}
+
+.ds-btn--danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.ds-btn--danger:hover:not(:disabled) {
+  background: var(--danger-border);
+}
+
+.ds-btn--ghost {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.ds-btn--ghost:hover:not(:disabled) {
+  background: var(--hover-wash);
+  color: var(--text);
+}
+
+/* A square target holding one icon and nothing else. */
+.ds-btn--icon {
+  min-height: 34px;
+  width: 34px;
+  padding: 0;
+  border-radius: var(--r-full);
+}
+
+.ds-btn--sm {
+  min-height: 30px;
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-xs);
+}
+
+.ds-btn--lg {
+  min-height: 46px;
+  padding: 0 var(--sp-5);
+  font-size: var(--fs-md);
+}
+
+.ds-btn--block {
+  width: 100%;
+}
+
+/* ── Badge ──────────────────────────────────────────────────────────── */
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 3px var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--fs-2xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ds-badge--live,
+.ds-badge--accepted {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.ds-badge--offline,
+.ds-badge--declined {
+  background: var(--surface-3);
+  color: var(--text-faint);
+}
+
+.ds-badge--count {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.ds-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: currentColor;
+  flex: none;
+}
+
+/* Offline reads as hollow as well as grey, so the state survives a greyscale
+   print and a red-green deficiency alike. */
+.ds-badge--offline .ds-dot {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+
+/* ── Metric ─────────────────────────────────────────────────────────── */
+/* One tile for every measured figure. This replaces three near-identical
+   families which differed only in font size. Borderless like everything
+   else — on a grid of six these used to read as six boxed cells. */
+.ds-metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  background: var(--surface);
+  border-radius: var(--r);
+  box-shadow: var(--e1);
+  min-width: 0;
+}
+
+.ds-metric__label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.ds-metric__value {
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.ds-metric__sub {
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+}
+
+/* A gauge that is over its line. A tinted fill plus a coloured value carries
+   the signal without turning the console into a warning light. */
+.ds-metric--triggered {
+  background: var(--sev-warning-soft);
+}
+
+.ds-metric--triggered .ds-metric__value {
+  color: var(--sev-warning);
+}
+
+.ds-metric--triggered .ds-metric__label,
+.ds-metric--triggered .ds-metric__sub {
+  color: var(--sev-warning-dim);
+}
+
+.ds-metric__flag {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--border-strong);
+  flex: none;
+}
+
+.ds-metric--triggered .ds-metric__flag {
+  background: var(--sev-warning);
+  box-shadow: none;
+}
+
+/* The headline figure on a card — savings totals, the consumer's current
+   draw. Same element, display type, no box of its own. */
+.ds-metric--hero {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: var(--sp-1);
+}
+
+.ds-metric--hero .ds-metric__value {
+  font-size: var(--fs-4xl);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.ds-metric--hero .ds-metric__sub {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+/* Inside a group or a card that already has its own surface. */
+.ds-metric--plain {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* ── Field ──────────────────────────────────────────────────────────── */
+.ds-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.ds-field__label {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.ds-field__hint {
+  font-size: var(--fs-xs);
+  color: var(--danger);
+}
+
+.ds-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r);
+  color: var(--text);
+  font-size: var(--fs-md);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.ds-input::placeholder {
+  color: var(--text-faint);
+}
+
+.ds-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3.5px var(--accent-soft);
+}
+
+select.ds-input,
+.ds-select {
+  appearance: none;
+  padding-right: var(--sp-7);
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.ds-select {
+  min-height: 34px;
+  padding-left: var(--sp-3);
+  background-color: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r);
+  color: var(--text);
+  font-size: var(--fs-sm);
+}
+
+.ds-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3.5px var(--accent-soft);
+}
+
+/* ── Notice ─────────────────────────────────────────────────────────── */
+.ds-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--accent-soft);
+  border-radius: var(--r);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.ds-notice--warn {
+  background: var(--sev-warning-soft);
+}
+
+.ds-notice--error {
+  background: var(--danger-soft);
+}
+
+.ds-notice__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ds-notice__body strong {
+  display: block;
+  font-weight: 600;
+}
+
+.ds-notice__text {
+  margin-top: var(--sp-1);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.ds-notice__dismiss {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-full);
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.ds-notice__dismiss:hover {
+  background: var(--hover-wash);
+  color: var(--text);
+}
+
+/* ── Switch ─────────────────────────────────────────────────────────── */
+.ds-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: var(--sp-1) 0;
+}
+
+.ds-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ds-switch__track {
+  position: relative;
+  width: 40px;
+  height: 24px;
+  flex: none;
+  background: var(--surface-3);
+  border-radius: var(--r-full);
+  transition: background var(--t);
+}
+
+.ds-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: var(--r-full);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--t);
+}
+
+.ds-switch[aria-checked="true"] .ds-switch__track {
+  background: var(--ok);
+}
+
+.ds-switch[aria-checked="true"] .ds-switch__thumb {
+  transform: translateX(16px);
+}
+
+.ds-switch__label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.ds-switch__scope {
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+}
+
+/* ── Alert ──────────────────────────────────────────────────────────── */
+/* Severity is a left rail plus a worded chip. The old card painted its whole
+   header bar fluorescent, which made a feed of six alerts unreadable and
+   made severity the loudest thing on the card rather than the title. */
+.ds-alert {
+  background: var(--surface);
+  border-radius: var(--r);
+  box-shadow: var(--e1);
+  border-left: 3px solid var(--border-strong);
+  overflow: hidden;
+  animation: ds-in 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.ds-alert--dimmed {
+  opacity: 0.55;
+}
+
+.ds-alert__strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+}
+
+.ds-alert__sev {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.ds-alert__time {
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+}
+
+.ds-alert--info {
+  border-left-color: var(--sev-info);
+}
+.ds-alert--info .ds-alert__strip {
+  background: var(--sev-info-soft);
+}
+.ds-alert--info .ds-alert__sev {
+  color: var(--sev-info);
+}
+
+.ds-alert--warning {
+  border-left-color: var(--sev-warning);
+}
+.ds-alert--warning .ds-alert__strip {
+  background: var(--sev-warning-soft);
+}
+.ds-alert--warning .ds-alert__sev {
+  color: var(--sev-warning);
+}
+
+.ds-alert--critical {
+  border-left-color: var(--sev-critical);
+}
+.ds-alert--critical .ds-alert__strip {
+  background: var(--sev-critical-soft);
+}
+.ds-alert--critical .ds-alert__sev {
+  color: var(--sev-critical);
+}
+
+.ds-alert--emergency {
+  border-left-color: var(--sev-emergency);
+}
+.ds-alert--emergency .ds-alert__strip {
+  background: var(--sev-emergency-soft);
+}
+.ds-alert--emergency .ds-alert__sev {
+  color: var(--sev-emergency);
+}
+
+.ds-alert__body {
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.ds-alert__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.ds-alert__title {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+
+.ds-alert__msg {
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.ds-alert__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.ds-alert__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+@keyframes ds-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Tag ────────────────────────────────────────────────────────────── */
+.ds-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ds-tag--ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.ds-tag--warn {
+  background: var(--sev-warning-soft);
+  color: var(--sev-warning);
+}
+
+.ds-tag--bad {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.ds-tag--auto {
+  background: var(--sev-info-soft);
+  color: var(--sev-info);
+}
+
+/* ── Severity chip ──────────────────────────────────────────────────── */
+.ds-sev {
+  display: inline-block;
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.ds-sev--info {
+  background: var(--sev-info-soft);
+  color: var(--sev-info);
+}
+.ds-sev--warning {
+  background: var(--sev-warning-soft);
+  color: var(--sev-warning);
+}
+.ds-sev--critical {
+  background: var(--sev-critical-soft);
+  color: var(--sev-critical);
+}
+.ds-sev--emergency {
+  background: var(--sev-emergency-soft);
+  color: var(--sev-emergency);
+}
+
+/* ── Commitment sheet ───────────────────────────────────────────────── */
+.ds-sheet {
+  border-radius: var(--r);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.ds-sheet__row {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-sheet__row:last-child {
+  border-bottom: none;
+}
+
+.ds-sheet__label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-faint);
+  padding-top: 1px;
+}
+
+.ds-sheet__value {
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.ds-sheet__note {
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface-3);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ── Outcome ────────────────────────────────────────────────────────── */
+.ds-outcome {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r);
+  background: var(--ok-soft);
+  color: var(--ok);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.ds-outcome--declined {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}

@@ -1,0 +1,145 @@
+/* The consumer phone app. */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Consumer phone app
+   ═══════════════════════════════════════════════════════════════════════ */
+.ds-app {
+  width: 100%;
+  max-width: var(--app-w);
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--canvas);
+}
+
+.ds-app__top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  padding-top: calc(var(--sp-3) + env(safe-area-inset-top));
+  background: color-mix(in srgb, var(--canvas) 80%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-app__brand {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.ds-app__brand span {
+  font-size: var(--fs-2xs);
+  font-weight: 400;
+  color: var(--text-faint);
+  letter-spacing: 0;
+}
+
+.ds-app__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  /* clears the fixed tab bar */
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
+
+.ds-app__foot {
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  text-align: center;
+  padding: 0 var(--sp-4) var(--sp-2);
+}
+
+.ds-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  width: 100%;
+  max-width: var(--app-w);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.ds-tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 56px;
+  margin: var(--sp-1) 6px;
+  border-radius: var(--r);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-faint);
+  font-size: var(--fs-2xs);
+  font-weight: 500;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+/* A filled pill rather than a colour swap alone. Colour on its own puts the
+   whole burden of "which tab am I on" on hue, which is the first thing to go
+   at arm's length on a phone in daylight — and the only thing to go for a
+   colour-blind reader. The fill is a second, positional signal. */
+.ds-tab[aria-selected="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.ds-tab__mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  line-height: 1;
+}
+
+.ds-tab__badge {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  margin-left: 6px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: var(--r-full);
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 17px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-install-hint {
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+@media (display-mode: standalone) {
+  .ds-install-hint {
+    display: none;
+  }
+}

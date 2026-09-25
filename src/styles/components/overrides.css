@@ -1,0 +1,102 @@
+/* Dark-scheme shape changes no token can express, then responsive and reduced-motion rules. Kept last so they win. */
+
+
+/* The two component rules that survive the token swap.
+
+   `.ds-btn--accept` used to need a third one — white text in light, dark ink
+   in dark — but the ok pair now carries its own ink in both schemes, so the
+   override is gone rather than moved.
+
+   The tab-bar badge and the segment pill remain because each is a solid light
+   shape whose *contents* or elevation have to change, which no token can
+   express on its own. */
+:root[data-theme="dark"] .ds-tab__badge {
+  color: #2a0505;
+}
+
+:root[data-theme="dark"] .ds-segment::after {
+  background: var(--surface-3);
+  box-shadow: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Above the phone width the consumer column becomes a framed panel on the
+   page rather than a full-bleed screen, and the tab bar stops being fixed. */
+@media (min-width: 520px) {
+  .ds-app {
+    min-height: auto;
+    margin: var(--sp-6) auto;
+    border-radius: var(--r-xl);
+    box-shadow: var(--e2);
+    overflow: hidden;
+  }
+
+  .ds-app__top {
+    border-radius: 0;
+  }
+
+  .ds-app__body {
+    padding-bottom: var(--sp-4);
+  }
+
+  .ds-tabbar {
+    position: sticky;
+    bottom: 0;
+    left: auto;
+    transform: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .ds-grid--6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .ds-grid--2,
+  .ds-grid--feed {
+    grid-template-columns: 1fr;
+  }
+  .ds-grid--3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .ds-page {
+    padding: var(--sp-4) var(--sp-3);
+  }
+  .ds-grid--3,
+  .ds-grid--6 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ds-header__title {
+    font-size: var(--fs-xl);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .ds-tile:hover {
+    transform: none;
+  }
+
+  .ds-tile:hover .ds-tile__go {
+    transform: none;
+  }
+
+  .ds-btn:active:not(:disabled) {
+    transform: none;
+  }
+}

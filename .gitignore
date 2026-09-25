@@ -1,0 +1,36 @@
+# Your settings and secrets. Written by `npm run setup`; never commit it.
+.env
+.env.*
+!.env.example
+
+# Runtime data: the SQLite database and the optional full dataset.
+data/*.db
+data/*.db-*
+data/full*
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+coverage/
+
+# PlatformIO
+firmware/.pio/
+
+# Python (tools/pipeline)
+.venv/
+__pycache__/
+*.py[cod]
+
+# Keys and certificates
+*.pem
+*.key
+
+# Editors and OS
+.DS_Store
+.vscode/
+.idea/
+.claude/
+*.log

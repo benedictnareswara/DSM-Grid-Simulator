@@ -1,10 +1,4 @@
-/**
- * Shared pager for the four listing pages.
- *
- * Kept dumb — the page owns `offset` and knows its own page size. Moved out of
- * `app/admin/AdminNav.tsx` unchanged when the shell absorbed that file's other
- * job; it was never navigation chrome, it just happened to live there.
- */
+/** Shared pager for the four listing pages. */
 export function Pager({
   offset,
   limit,
@@ -32,8 +26,8 @@ export function Pager({
       </span>
       <button
         className="ds-btn ds-btn--sm"
-        // The count endpoints are separate, so rather than fetch a total just to
-        // grey this out, "a full page came back" is the signal there may be more.
+        // The count endpoints are separate, so rather than fetch a total just to grey this out, "a
+        // full page came back" is the signal there may be more.
         disabled={count < limit}
         onClick={() => onChange(offset + limit)}
       >

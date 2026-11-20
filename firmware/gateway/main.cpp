@@ -1,23 +1,4 @@
-// ============================================================================
-// DSM gateway firmware
-//
-// Connects to the DSM server over WebSocket (/ws/gateway) and brokers every
-// alert and answer between the operator and the households:
-//
-//   Operator push -> server -> gateway (relay_alert)    -> server (forward_alert)    -> phones
-//   Household tap -> server -> gateway (relay_response) -> server (forward_response) -> operator
-//
-// The server only delivers what this board echoes back, so with the gateway
-// unplugged nothing gets through. That's the fail-closed design. Grid
-// telemetry doesn't pass through here; only alerts and answers do.
-//
-// An accepted alert also goes on to the Load Control Unit over ESP-NOW, which
-// switches the physical load. That leg is in espnow_link.cpp; it hangs off the
-// two relay functions below and can't originate anything of its own.
-//
-// Settings (Wi-Fi, LCU MAC, gateway token) come from the repo-root .env at
-// build time. See scripts/load_env.py.
-// ============================================================================
+// ============================================================================ DSM gateway firmware
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -32,17 +13,14 @@
 WebSocketsClient webSocket;
 bool wsConnected = false;
 
-// Where the server is, and how we found out. Resolved at boot and again
-// whenever the link looks wrong, never baked in: the laptop's address is a DHCP
-// lease and it moves.
+// Where the server is, and how we found out.
 IPAddress serverIp;
 uint16_t  serverPort          = SERVER_PORT;
 bool      resolvedViaMdns     = false;
 bool      mdnsStarted         = false;
 uint8_t   consecutiveFailures = 0;
 
-// The token rides as a query parameter. The path is logged, the token never is:
-// this serial log is the first thing anyone pastes into a bug report.
+// The token rides as a query parameter.
 static const String wsPath = String(WS_PATH_BASE) + "?token=" + GATEWAY_TOKEN;
 static const char* SAFE_WS_PATH = WS_PATH_BASE "?token=<redacted>";
 
@@ -70,8 +48,8 @@ void connectWiFi() {
       Serial.printf("[WiFi] FAILED — status %d after %lu ms\n",
                     WiFi.status(), (unsigned long)WIFI_CONNECT_TIMEOUT_MS);
 
-      // The status code narrows this down a long way, and the raw
-      // WiFiGeneric reason spam above does not. Say what each one means.
+      // The status code narrows this down a long way, and the raw WiFiGeneric reason spam above
+      // does not.
       switch (WiFi.status()) {
         case WL_NO_SSID_AVAIL:
           Serial.println("[WiFi]   No AP with that SSID is on the air.");
@@ -109,19 +87,12 @@ void connectWiFi() {
   Serial.println(" dBm");
 }
 
-// ── Finding the server ──
-// The server advertises `_dsm._tcp` over mDNS with its port, so this board
+// ── Finding the server ── The server advertises `_dsm._tcp` over mDNS with its port, so this board
 // needs no IP address at all, and a DHCP change on the laptop costs nothing.
-// SERVER_HOST in .env is a fallback for networks that block mDNS.
-//
-// Which one won is printed every time on purpose: a silent fallback to a stale
-// address looks exactly like a network fault at the serial monitor.
-//
-// Returns false when neither worked; the caller retries.
 bool resolveServer() {
   if (!mdnsStarted) {
-    // The responder has to be running before we can query, even though we only
-    // use it to look the server up.
+    // The responder has to be running before we can query, even though we only use it to look the
+    // server up.
     mdnsStarted = MDNS.begin(MDNS_DEVICE_NAME);
     if (!mdnsStarted) Serial.println("[mDNS] responder failed to start");
   }
@@ -156,22 +127,17 @@ bool resolveServer() {
   return false;
 }
 
-// ── WebSocket (re)start ──
-// Every path that brings the socket up goes through here, so the heartbeat
-// cannot be configured on one and forgotten on another.
+// ── WebSocket (re)start ── Every path that brings the socket up goes through here, so the
+// heartbeat cannot be configured on one and forgotten on another.
 void startWebSocket() {
-  // No-op if it was never up. Present because the Wi-Fi recovery path used to
-  // call begin() again on an already-initialised object without closing it.
+  // No-op if it was never up.
   webSocket.disconnect();
 
   webSocket.begin(serverIp, serverPort, wsPath.c_str());
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(WS_RECONNECT_INTERVAL_MS);
 
-  // The heartbeat is what makes a dead link *observable*. Without it a
-  // half-open TCP socket leaves this board believing it is connected while the
-  // server's sends disappear into a kernel buffer — alerts silently lost, and
-  // the admin's gateway badge still green. See config.h.
+  // The heartbeat is what makes a dead link *observable*.
   webSocket.enableHeartbeat(WS_PING_INTERVAL_MS, WS_PONG_TIMEOUT_MS,
                             WS_MISSED_PONG_LIMIT);
 
@@ -179,12 +145,8 @@ void startWebSocket() {
                 serverIp.toString().c_str(), serverPort, SAFE_WS_PATH);
 }
 
-// ── Relay: Admin -> ESP32 -> Consumer ──
-// Logs the admin-approved alert, then immediately forwards it back to the
-// server so it can be fanned out to household phones.
-//
-// The whole alert object is deep-copied through untouched, so new alert fields
-// (throttle setpoint, duration, ...) cross this broker with no firmware change.
+// ── Relay: Admin -> ESP32 -> Consumer ── Logs the admin-approved alert, then immediately forwards
+// it back to the server so it can be fanned out to household phones.
 void relayAlert(JsonObject alert) {
   const char* severity  = alert["severity"]  | "unknown";
   const char* title     = alert["title"]     | "(no title)";
@@ -199,9 +161,7 @@ void relayAlert(JsonObject alert) {
   Serial.printf( "│ param: %s\n", parameter);
   Serial.println("└─────────────────────────────────────");
 
-  // Remember what this alert asks the load for. The acceptance arrives later
-  // carrying only an id, so this is the only moment the setpoint and the id are
-  // in the same place — see espnow_link.h.
+  // Remember what this alert asks the load for.
   espnowRememberAlert(alert["id"] | "",
                       alert["target_reduction_w"] | 0.0f,
                       alert["duration_minutes"] | 0);
@@ -215,19 +175,14 @@ void relayAlert(JsonObject alert) {
   Serial.println("[Relay] forward_alert -> server (for households)");
 }
 
-// ── Relay: Consumer -> ESP32 -> Admin ──
-// Logs the household's accept/decline, then forwards it back to the server
-// so it can be delivered to the operator.
-//
-// Unlike relayAlert() this rebuilds the message field by field, so anything not
-// named here is dropped — never put data on a response that the admin needs.
+// ── Relay: Consumer -> ESP32 -> Admin ── Logs the household's accept/decline, then forwards it
+// back to the server so it can be delivered to the operator.
 void relayResponse(JsonObject response) {
   const char* alertId     = response["alert_id"]     | "(unknown)";
   bool accepted            = response["accepted"]     | false;
   const char* respondedAt = response["responded_at"] | "";
 
-  // Who answered, copied through unchanged. The gateway doesn't mint or verify
-  // identity; it relays what the server signed off on.
+  // Who answered, copied through unchanged.
   const char* userId      = response["user_id"]      | "";
   const char* username    = response["username"]     | "(anonymous)";
 
@@ -246,16 +201,7 @@ void relayResponse(JsonObject response) {
   webSocket.sendTXT(payload);
   Serial.println("[Relay] forward_response -> server (for the operator)");
 
-  // Only after the response is on its way to the Admin. The ESP-NOW leg is
-  // downstream of the relay and must never delay or gate it: a radio that is
-  // off, mis-channelled or absent still leaves the dashboard path intact. That
-  // ordering is also what makes hop-to-send tolerable — if the brief excursion
-  // off the AP's channel does drop the socket, it costs a reconnect, not a
-  // response.
-  //
-  // Note this reads `accepted` and the id off the *inbound* response rather
-  // than adding anything to the outbound one. Throttle data must not ride a
-  // forward_response, and with the cache it doesn't need to.
+  // Only after the response is on its way to the Admin.
   if (accepted) {
     espnowDispatchAccepted(alertId, username);
   }
@@ -274,9 +220,8 @@ void webSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
 
     case WStype_DISCONNECTED:
       wsConnected = false;
-      // Fires on a failed *attempt* as well as on losing an established
-      // connection, which is what makes it usable as a "wrong address"
-      // signal — loop() re-resolves once these stack up.
+      // Fires on a failed *attempt* as well as on losing an established connection, which is what
+      // makes it usable as a "wrong address" signal — loop() re-resolves once these stack up.
       if (consecutiveFailures < 255) consecutiveFailures++;
       Serial.println("[WS] Disconnected — will auto-reconnect");
       break;
@@ -301,8 +246,7 @@ void webSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
         // Consumer accepted/declined — relay it onward to Admin dashboards.
         relayResponse(doc.as<JsonObject>());
       } else if (strcmp(msgType, "error") == 0) {
-        // The server refused us. Today that only means the token: .env was
-        // regenerated after this board was flashed.
+        // The server refused us.
         Serial.printf("[WS] Server rejected this gateway: %s\n", doc["message"] | "(no reason)");
         Serial.println("[WS] Re-flash it so it picks up GATEWAY_TOKEN from .env: npm run flash:gateway");
       } else if (strcmp(msgType, "esp32_status") == 0) {
@@ -364,13 +308,11 @@ void loop() {
     Serial.println("[WiFi] Connection lost — reconnecting...");
     connectWiFi();
 
-    // WiFi.disconnect(true) took the stack down and every ESP-NOW peer with
-    // it. Rebuilding here is also what re-pins the peer to the new channel if
-    // the AP moved while we were off the air.
+    // WiFi.disconnect(true) took the stack down and every ESP-NOW peer with it.
     espnowBegin();
 
-    // The responder doesn't survive the reconnect, and the server may have
-    // taken a new lease while we were off the air, so look it up again.
+    // The responder doesn't survive the reconnect, and the server may have taken a new lease while
+    // we were off the air, so look it up again.
     if (mdnsStarted) {
       MDNS.end();
       mdnsStarted = false;
@@ -379,8 +321,8 @@ void loop() {
     consecutiveFailures = 0;
   }
 
-  // Repeated failures with Wi-Fi up means we're dialling the wrong address,
-  // almost always the laptop's DHCP lease moving. Look the server up again.
+  // Repeated failures with Wi-Fi up means we're dialling the wrong address, almost always the
+  // laptop's DHCP lease moving.
   if (consecutiveFailures >= WS_FAILURES_BEFORE_RERESOLVE) {
     consecutiveFailures = 0;
     Serial.println("[WS] Repeated connect failures — looking the server up again");
@@ -390,7 +332,7 @@ void loop() {
   // Process WebSocket events (non-blocking)
   webSocket.loop();
 
-  // Print whatever the ESP-NOW callbacks left behind (they run on the Wi-Fi
-  // task and deliberately do no I/O of their own).
+  // Print whatever the ESP-NOW callbacks left behind (they run on the Wi-Fi task and deliberately
+  // do no I/O of their own).
   espnowLoop();
 }

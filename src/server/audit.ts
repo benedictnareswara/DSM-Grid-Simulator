@@ -1,10 +1,4 @@
-/**
- * The audit trail. recordAudit() is called wherever an operator changes
- * something, and it never updates or deletes a row.
- *
- * Failures are swallowed on purpose. A missing log line is a gap; a 500 on an
- * alert push because the log write failed would stop an emergency alert.
- */
+/** The audit trail. */
 
 import type { Conn } from "./db/client";
 import { auditLog, type UserRow } from "./db/schema";

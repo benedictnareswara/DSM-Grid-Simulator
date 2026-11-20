@@ -11,29 +11,7 @@ import {
   type Thresholds,
 } from "@/lib/types";
 
-/**
- * Retune what the engine alerts on.
- *
- * `POST /api/thresholds` has always been able to do this and there was no way
- * to reach it from the console — the dashboard carried a comment saying as
- * much. Six numbers decide everything this product does: which alerts fire,
- * what the household's verdict says, which gauges light. Leaving them
- * adjustable only by curl made the six-parameter model a fixed demo.
- *
- * Two things the panel does that a bare form would not:
- *
- * - **Each row shows the parameter's live value next to its line.** A
- *   threshold in isolation is unanswerable; "reserve margin 10%" means nothing
- *   until you can see it is sitting at 18% right now. This is the difference
- *   between tuning and guessing.
- * - **Each row says which direction trips it.** `< 10%` and `> 1.5×` are both
- *   "the threshold", and which side is the problem is not recoverable from the
- *   number.
- *
- * Order is `PARAMETER_CONFIGS`, which is `config.PARAMETER_META`'s priority
- * order — the same sequence the gauges above read in and the same one the
- * engine breaks a severity tie with.
- */
+/** Retune what the engine alerts on. */
 export function ThresholdPanel({
   thresholds,
   gridState,
@@ -46,8 +24,6 @@ export function ThresholdPanel({
   onClose: () => void;
 }) {
   // A local working copy: the operator drags six sliders and commits once.
-  // Posting per-drag would audit every intermediate value and retune the
-  // running engine mid-gesture.
   const [draft, setDraft] = useState<Thresholds>(thresholds ?? DEFAULT_THRESHOLDS);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,8 +42,8 @@ export function ThresholdPanel({
     const ok = await apiSetThresholds(draft);
     setSaving(false);
     if (ok) {
-      // Nothing to set locally — the backend broadcasts `thresholds` to every
-      // admin socket including this one, which is what relabels the gauges.
+      // Nothing to set locally — the backend broadcasts `thresholds` to every admin socket
+      // including this one, which is what relabels the gauges.
       onClose();
     } else {
       setError("The backend rejected the change. The engine is still on the old values.");
@@ -80,9 +56,7 @@ export function ThresholdPanel({
       role="dialog"
       aria-modal="true"
       aria-label="Alert thresholds"
-      // Click-outside closes. The panel itself stops the bubble below, so only
-      // the scrim is a target — a drag that ends outside a slider must not be
-      // read as a dismissal.
+      // Click-outside closes.
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -144,8 +118,10 @@ export function ThresholdPanel({
                   <span>
                     {t.format(t.min)} – {t.format(t.max)}
                   </span>
-                  {/* The whole reason this panel is usable: where the signal
-                      actually is, beside the line you are moving. */}
+                  {/*
+                      The whole reason this panel is usable: where the signal actually is, beside
+                      the line you are moving.
+                  */}
                   <span className={triggered ? "ds-tune__live--hot" : undefined}>
                     {live === null
                       ? "no reading yet"

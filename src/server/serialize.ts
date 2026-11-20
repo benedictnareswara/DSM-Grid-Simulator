@@ -1,8 +1,4 @@
-/**
- * Turning rows into the wire shapes in src/lib/types.ts. The participation log,
- * account profile and savings endpoints all use participationEntry(), so they
- * can't quote differently-computed credit for the same answer.
- */
+/** Turning rows into the wire shapes in src/lib/types.ts. */
 
 import { inArray } from "drizzle-orm";
 import type {
@@ -15,6 +11,7 @@ import type {
   UserRole,
   UserStatus,
 } from "@/lib/types";
+import { DELIVERY_GRACE_MS } from "@/lib/constants";
 import type { Conn } from "./db/client";
 import { users, type AlertResponseRow, type AlertRow, type AuditRow, type UserRow } from "./db/schema";
 import * as incentives from "./grid/incentives";
@@ -44,11 +41,14 @@ export function usernames(db: Conn, ids: Iterable<string | null | undefined>): M
   return new Map(rows.map((r) => [r.id, r.username]));
 }
 
-/** The single value the admin feed switches on. Derived, never stored. */
-export function alertOutcome(a: AlertRow): AlertOutcome | null {
+/** The single value the admin feed switches on. */
+export function alertOutcome(a: AlertRow, now: number = Date.now()): AlertOutcome | null {
   if (a.ignoredAt) return "ignored";
   if (a.deliveredAt) return a.autoPushed ? "auto-pushed" : "pushed";
-  if (a.pushedAt) return "failed-gateway";
+  if (a.pushedAt) {
+    const inFlight = a.pushRelayed && now - a.pushedAt.getTime() < DELIVERY_GRACE_MS;
+    return inFlight ? "sending" : "failed-gateway";
+  }
   return null;
 }
 
@@ -86,11 +86,7 @@ export function alertItem(
   };
 }
 
-/**
- * One answer, flattened with the alert it answers and what it earned. A
- * declined answer reports multipliers of 1.0 and zero credit, not what it
- * would have been worth.
- */
+/** One answer, flattened with the alert it answers and what it earned. */
 export function participationEntry(
   r: AlertResponseRow,
   a: AlertRow,

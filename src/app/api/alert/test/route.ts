@@ -7,8 +7,8 @@ import { PARAMETERS, SEVERITIES } from "@/server/grid/constants";
 import { shedFromSetpoint, throttleWindowMinutes } from "@/server/grid/incentives";
 import { ApiError, clientIp, json, readBody, requireAdmin, route } from "@/server/http";
 
-// The operator picks what kind of alert and how hard; the server builds the
-// rest from the live grid. No prose, reward, id or tick from the client.
+// The operator picks what kind of alert and how hard; the server builds the rest from the live
+// grid.
 const Body = z.object({
   parameter: z.string(),
   severity: z.string(),
@@ -16,11 +16,7 @@ const Body = z.object({
   target_reduction_w: z.number().nullish(),
 });
 
-/**
- * Compose an alert by hand and push it down the ordinary path. It's a real
- * alert in every way: same wording, same reward maths, same row, same audit
- * action, and households are paid for it. It never touches cooldowns.
- */
+/** Compose an alert by hand and push it down the ordinary path. */
 export const POST = route(async (req, { rt }) => {
   const admin = await requireAdmin(req, rt);
   const body = await readBody(req, Body);
@@ -37,8 +33,8 @@ export const POST = route(async (req, { rt }) => {
   const window = body.duration_minutes || throttleWindowMinutes(body.severity);
   if (window <= 0) throw new ApiError(400, "bad_request", "duration_minutes must be positive");
 
-  // Only when the operator typed over the pre-filled watts; otherwise the shed
-  // comes from the model exactly as a real alert's does.
+  // Only when the operator typed over the pre-filled watts; otherwise the shed comes from the model
+  // exactly as a real alert's does.
   const shedOverride = body.target_reduction_w != null ? shedFromSetpoint(body.target_reduction_w, window) : undefined;
 
   const alert = rt.simulator.control.compose(state, body.parameter as Parameter, body.severity as Severity, {
@@ -48,7 +44,7 @@ export const POST = route(async (req, { rt }) => {
   const connected = rt.hub.gatewayConnected;
 
   recordTrigger(rt.db, alert);
-  markPushed(rt.db, alert, admin.id, false);
+  markPushed(rt.db, alert, admin.id, false, connected);
   recordAudit(rt.db, AUDIT.ALERT_PUSH, {
     actor: admin,
     targetType: "alert",

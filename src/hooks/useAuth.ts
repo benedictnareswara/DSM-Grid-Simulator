@@ -5,16 +5,8 @@ import { useRouter } from "next/navigation";
 import type { ApiError, AuthTokens, User } from "@/lib/types";
 
 /**
- * Authentication against the server: a bcrypt-backed account, a 15-minute
- * access JWT and a rotating refresh token. Two properties are deliberate:
- *
- *  - **sessionStorage, not localStorage.** Closing the tab signs you out, so a
- *    shared device never silently resumes someone's session.
- *  - The route guards in /admin and /consumer still re-check on mount.
- *
- * Tokens are module-level as well as in sessionStorage so that the non-React
- * API helpers in useGridWebSocket.ts can read the current access token without
- * every call site threading it through.
+ * Authentication against the server: a bcrypt-backed account, a 15-minute access JWT and a rotating
+ * refresh token.
  */
 
 const AUTH_KEY = "dsm_auth";
@@ -25,9 +17,7 @@ interface StoredAuth {
   user: User;
 }
 
-// ── Module-level token state ──
-// Read by authHeader() and the WebSocket URL builder. Kept in step with
-// sessionStorage by the two writers below, and nowhere else.
+// ── Module-level token state ── Read by authHeader() and the WebSocket URL builder.
 let memoryAuth: StoredAuth | null = null;
 const subscribers = new Set<(auth: StoredAuth | null) => void>();
 
@@ -37,8 +27,8 @@ function setAuthEverywhere(auth: StoredAuth | null) {
     if (auth) sessionStorage.setItem(AUTH_KEY, JSON.stringify(auth));
     else sessionStorage.removeItem(AUTH_KEY);
   } catch {
-    // Private-mode storage failures shouldn't break an otherwise-valid session;
-    // it just won't survive a reload.
+    // Private-mode storage failures shouldn't break an otherwise-valid session; it just won't
+    // survive a reload.
   }
   subscribers.forEach((fn) => fn(auth));
 }
@@ -62,7 +52,6 @@ function readStoredAuth(): StoredAuth | null {
   }
 }
 
-/** The current access token, or null. Used to build authorised requests. */
 export function accessToken(): string | null {
   return readStoredAuth()?.access_token ?? null;
 }
@@ -72,12 +61,7 @@ export function currentUser(): User | null {
   return readStoredAuth()?.user ?? null;
 }
 
-/**
- * Bearer header for the current access token, or `{}` when signed out.
- *
- * Returning an empty object rather than throwing lets callers spread it
- * unconditionally into a fetch init.
- */
+/** Bearer header for the current access token, or `{}` when signed out. */
 export function authHeader(): Record<string, string> {
   const token = accessToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -102,14 +86,7 @@ async function parseError(res: Response): Promise<ApiError> {
   return { code: `http_${res.status}`, message: `Request failed (${res.status}).` };
 }
 
-/**
- * Exchange the refresh token for a new pair.
- *
- * Single-flight: rotation invalidates the old token, so two concurrent refreshes
- * would race and the loser's token would be treated as *reuse* — which the
- * backend answers by revoking the whole family and logging everyone out. The
- * shared promise makes that impossible.
- */
+/** Exchange the refresh token for a new pair. */
 let refreshInFlight: Promise<boolean> | null = null;
 
 export function refreshSession(): Promise<boolean> {
@@ -136,9 +113,8 @@ export function refreshSession(): Promise<boolean> {
       });
       return true;
     } catch {
-      // A network blip is not a bad session — keep the tokens and let the
-      // caller surface the failure, rather than logging the user out because
-      // the Wi-Fi dropped for a second.
+      // A network blip is not a bad session — keep the tokens and let the caller surface the
+      // failure, rather than logging the user out because the Wi-Fi dropped for a second.
       return false;
     } finally {
       refreshInFlight = null;
@@ -148,13 +124,7 @@ export function refreshSession(): Promise<boolean> {
   return refreshInFlight;
 }
 
-/**
- * fetch() with the access token attached, retried once through a refresh on 401.
- *
- * Every backend call in the app goes through this. The retry is what makes a
- * 15-minute access token invisible: without it, a dashboard left open would
- * start failing a quarter of an hour in.
- */
+/** fetch() with the access token attached, retried once through a refresh on 401. */
 export async function fetchWithAuth(path: string, init: RequestInit = {}): Promise<Response> {
   const send = () =>
     fetch(api(path), {
@@ -184,20 +154,14 @@ interface UseAuthReturn {
   isLoading: boolean;
 }
 
-/**
- * Session state and the actions that change it.
- *
- * Reads from localStorage on mount, so `isLoading` is true for the first
- * render and a guard that redirects before checking it will bounce a
- * signed-in user on every reload.
- */
+/** Session state and the actions that change it. */
 export function useAuth(): UseAuthReturn {
   const [auth, setAuth] = useState<StoredAuth | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Hydrate from sessionStorage after mount, and stay subscribed so that a
-  // token refresh or a forced sign-out elsewhere re-renders this hook too.
+  // Hydrate from sessionStorage after mount, and stay subscribed so that a token refresh or a
+  // forced sign-out elsewhere re-renders this hook too.
   useEffect(() => {
     let cancelled = false;
     const stored = readStoredAuth();
@@ -262,8 +226,8 @@ export function useAuth(): UseAuthReturn {
         }),
       });
       if (!res.ok) return { success: false, error: await parseError(res) };
-      // No tokens on purpose — the account is pending until an operator
-      // approves it, so there is nothing to sign in to yet.
+      // No tokens on purpose — the account is pending until an operator approves it, so there is
+      // nothing to sign in to yet.
       return { success: true };
     } catch {
       return {
@@ -279,8 +243,8 @@ export function useAuth(): UseAuthReturn {
   const logout = useCallback(() => {
     const stored = readStoredAuth();
     if (stored?.refresh_token) {
-      // Fire-and-forget: the local session is gone either way, and a failed
-      // revoke should not keep the user staring at a spinner.
+      // Fire-and-forget: the local session is gone either way, and a failed revoke should not keep
+      // the user staring at a spinner.
       fetch(api("/api/auth/logout"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },

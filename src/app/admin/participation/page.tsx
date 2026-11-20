@@ -26,15 +26,7 @@ const ANSWERS = [
 
 /**
  * Credit, latency and the two multipliers all arrive computed on the row —
- * `src/server/grid/incentives.ts` owns that arithmetic now. This page used to carry its
- * own `ASSUMED_REDUCTION_KWH = 1` and multiply here, which was one of four
- * copies that agreed only by coincidence.
- *
- * Latency is measured from the gateway's *delivery*, not the trigger: an alert
- * can sit unpushed for minutes, and counting that as the household being slow
- * blames them for the operator's pause. A missing value means there was no
- * delivery stamp to measure from, or the two stamps disagreed about the clock —
- * both worth leaving blank rather than rendering as "0s".
+ * `src/server/grid/incentives.ts` owns that arithmetic now.
  */
 const creditOf = (r: ParticipationEntry) => r.credit_idr ?? 0;
 
@@ -49,8 +41,8 @@ export default function ParticipationPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [savings, setSavings] = useState<SavingsSummary | null>(null);
 
-  // Programme-wide and unfiltered — /api/savings takes no filter parameters, so
-  // it is fetched once rather than with the query below.
+  // Programme-wide and unfiltered — /api/savings takes no filter parameters, so it is fetched once
+  // rather than with the query below.
   useEffect(() => {
     let cancelled = false;
     apiGetSavings()
@@ -70,8 +62,8 @@ export default function ParticipationPage() {
 
   useEffect(() => {
     let cancelled = false;
-    // `accepted` has to be undefined rather than "" for "either", because
-    // `false` is a meaningful value the query serialiser must not drop.
+    // `accepted` has to be undefined rather than "" for "either", because `false` is a meaningful
+    // value the query serialiser must not drop.
     const filters = {
       accepted: answer === "" ? undefined : answer === "true",
       severity,
@@ -95,11 +87,8 @@ export default function ParticipationPage() {
     };
   }, [query, offset, answer, severity, parameter]);
 
-  // Household stays a client-side filter: the page is already bounded to LIMIT
-  // rows and a round trip per keystroke would be slower than filtering what is
-  // on screen. The dropdowns go to the server because they change *which* rows
-  // exist, not just which of this page's rows are visible — filtering those
-  // locally would page through 50 rows and then show three.
+  // Household stays a client-side filter: the page is already bounded to LIMIT rows and a round
+  // trip per keystroke would be slower than filtering what is on screen.
   const shown = household
     ? rows.filter((r) => r.username.toLowerCase().includes(household.toLowerCase()))
     : rows;
@@ -172,11 +161,7 @@ export default function ParticipationPage() {
         />
       </FilterBar>
 
-      {/* The page's own numbers, as figures rather than one run-on sentence of
-          eight. `total` is the server's count for these filters; everything
-          else describes the rows actually on screen, which is why the labels
-          differ — conflating the two would report a 50-row page's acceptance
-          rate as the whole log's. */}
+      {/* The page's own numbers, as figures rather than one run-on sentence of eight. */}
       <div className="ds-metrics">
         <Metric
           label="Matching"
@@ -197,15 +182,7 @@ export default function ParticipationPage() {
         <Metric label="Credit" value={`Rp ${idr(credit)}`} sub="on this page" />
       </div>
 
-      {/* Where the programme's load is actually coming from. This was a card on
-          the dashboard, which already showed the same total in a tile and in a
-          chart — three renderings of one object. The split belongs beside the
-          answers it is derived from, and an operator deciding what to push next
-          needs it far more than the total: "everyone accepts price alerts and
-          nobody accepts renewable ones" is an actionable fact.
-
-          Programme-wide and unfiltered, unlike the row above — /api/savings has
-          no filter parameters, so labelling it otherwise would be a lie. */}
+      {/* Where the programme's load is actually coming from. */}
       {savings && savings.accepted_count > 0 && (
         <div className="ds-card ds-card--strip">
           <div className="ds-card__head">
@@ -227,10 +204,7 @@ export default function ParticipationPage() {
                 </span>
               </div>
             ))}
-            {/* Modelled, not metered. Stated here rather than only in the docs —
-                the figure is otherwise indistinguishable from a settlement
-                number, and this is a simulation replaying a fixed recording
-                that no household's answer can move. */}
+            {/* Modelled, not metered. */}
             <p className="ds-muted ds-muted--xs ds-eyebrow--spaced">
               Modelled from what each alert asked for, not metered. See
               docs/ARCHITECTURE.md.
@@ -259,12 +233,11 @@ export default function ParticipationPage() {
                 <th>Household</th>
                 <th>Answer</th>
                 <th className="ds-table__num">Replied in</th>
-                {/* Severity rides inside this cell rather than owning a
-                    column: it is the fastest thing to scan for, so it stays
-                    visible, but it is one chip and does not need 90px of
-                    header. Parameter and Tick moved into the trace — both are
-                    reference values you look up once you have already found
-                    the row. Eleven columns down to eight. */}
+                {/*
+                    Severity rides inside this cell rather than owning a column: it is the fastest
+                    thing to scan for, so it stays visible, but it is one chip and does not need
+                    90px of header.
+                */}
                 <th>Alert</th>
                 <th className="ds-table__num">kWh</th>
                 <th className="ds-table__num">Credit</th>
@@ -293,14 +266,7 @@ export default function ParticipationPage() {
   );
 }
 
-/**
- * One answer, with the alert's lifecycle folded away behind a disclosure.
- *
- * The lifecycle is four timestamps and a name. As columns they would double
- * the table's width for something read once per investigation, so they open
- * per row instead — the table stays scannable and the detail is one click
- * rather than a different page.
- */
+/** One answer, with the alert's lifecycle folded away behind a disclosure. */
 function Row({
   entry,
   open,
@@ -330,9 +296,7 @@ function Row({
         </td>
         <td className="ds-table__num" title="Measured from the gateway delivering the alert">
           {latency === null ? "—" : duration(latency)}
-          {/* Why this row was paid more, next to the reason it was. A bare
-              "1.25×" in the credit column would leave the operator working out
-              which of the two multipliers earned it. */}
+          {/* Why this row was paid more, next to the reason it was. */}
           {entry.accepted && entry.response_bonus_label && (
             <div className="ds-muted ds-muted--xs">
               {multiplier(entry.response_bonus)} speed
@@ -381,15 +345,15 @@ function Row({
             {entry.alert_incentive && (
               <p className="ds-muted">Incentive: {entry.alert_incentive}</p>
             )}
-            {/* The two columns this table gave up, kept where they are still
-                answerable rather than dropped. */}
+            {/*
+                The two columns this table gave up, kept where they are still answerable rather than
+                dropped.
+            */}
             <p className="ds-muted ds-muted--xs">
               {entry.alert_parameter} · tick {entry.tick.toLocaleString()}
             </p>
 
-            {/* The credit, factor by factor. A single rupiah figure is not
-                checkable — this is what the operator needs when a household
-                asks why two answers to the same alert paid differently. */}
+            {/* The credit, factor by factor. */}
             {entry.accepted && (
               <>
                 <p className="ds-eyebrow ds-eyebrow--spaced">
@@ -442,8 +406,6 @@ function Row({
                 label={entry.auto_pushed ? "Auto-pushed" : "Pushed"}
                 value={fmt(entry.pushed_at)}
                 // No name on an autopush because no operator was involved.
-                // A named pusher who is now null means the account was
-                // deleted — the alert still happened, so the step stays.
                 note={
                   entry.auto_pushed
                     ? "by autopush"

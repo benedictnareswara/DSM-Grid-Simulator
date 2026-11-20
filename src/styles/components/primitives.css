@@ -5,9 +5,7 @@
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* ── Card ───────────────────────────────────────────────────────────── */
-/* No border. The card is lighter than the canvas and casts `--e1`; that is
-   the whole separation. A 1px line on top of both is the belt-and-braces
-   look this system is moving away from. */
+/* No border. */
 .ds-card {
   background: var(--surface);
   border-radius: var(--r-lg);
@@ -15,19 +13,11 @@
   padding: var(--pad-card);
 }
 
-.ds-card--tint {
-  background: var(--surface-2);
-  box-shadow: none;
-}
-
 .ds-card--pad-sm {
   padding: var(--sp-4);
 }
 
-/* A card whose heading is a band rather than a line of text. This is the ONE
-   card-heading system — the old code also had a `.ds-title` floating above a
-   card, chosen ad hoc, so two cards side by side could be titled two ways.
-   `.ds-title` survives only for page-level section headings. */
+/* A card whose heading is a band rather than a line of text. */
 .ds-card--strip {
   padding: 0;
   display: flex;
@@ -64,15 +54,11 @@
   min-height: 0;
 }
 
-/* A body that is a list of rows rather than free content — the rows supply
-   their own vertical rhythm, so the card only pads the sides. */
-.ds-card__body--rows {
-  padding: 0 var(--pad-card);
-}
-
-/* The header strip is the link, never the whole card — the bodies carry Push,
-   Ignore, Approve and Delete, so a card-wide target would sit under all of
-   them and nest interactive elements inside an anchor. */
+/*
+ * The header strip is the link, never the whole card — the bodies carry Push, Ignore, Approve and
+ * Delete, so a card-wide target would sit under all of them and nest interactive elements inside an
+ * anchor.
+ */
 a.ds-card__head {
   text-decoration: none;
   color: inherit;
@@ -84,11 +70,7 @@ a.ds-card__head:hover {
 }
 
 /* ── Grouped list ───────────────────────────────────────────────────── */
-/* One rounded surface, hairline-separated rows, no outer border — the
-   iOS Settings shape. Anything that is "a list of labelled facts or
-   actions" belongs in one of these rather than in a stack of little
-   bordered boxes, which is what a metric grid degenerates into when the
-   things in it aren't actually measurements. */
+/* One rounded surface, hairline-separated rows, no outer border — the iOS Settings shape. */
 .ds-group {
   background: var(--surface);
   border-radius: var(--r-lg);
@@ -122,10 +104,7 @@ a.ds-card__head:hover {
   white-space: nowrap;
 }
 
-/* Nested inside a card that already supplies a surface and padding. Without
-   this the group inherits `--pad-card` on top of the card's own, so a two-word
-   label wraps inside a box with 48px of horizontal air — and a white group on
-   a white card reads as a stray outline rather than as a grouping. */
+/* Nested inside a card that already supplies a surface and padding. */
 .ds-card .ds-group,
 .ds-details__body .ds-group {
   background: var(--surface-2);
@@ -157,8 +136,7 @@ a.ds-card__head:hover {
   font-weight: 400;
 }
 
-/* A quiet label above a block. Sentence case, not the uppercase-tracked
-   idiom this replaced — see rule 3 in the header. */
+/* A quiet label above a block. */
 .ds-eyebrow {
   font-size: var(--fs-xs);
   font-weight: 600;
@@ -211,9 +189,7 @@ a.ds-card__head:hover {
   min-width: 0;
 }
 
-/* A card whose body scrolls rather than growing without limit. Height is a
-   token, not a per-card literal — the feed and the audit trail were 520 and
-   420 for no stated reason. */
+/* A card whose body scrolls rather than growing without limit. */
 .ds-card--scroll {
   max-height: 520px;
 }
@@ -268,17 +244,16 @@ a.ds-card__head:hover {
 }
 
 .ds-btn--primary {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--text-on-accent);
   font-weight: 600;
 }
 
 .ds-btn--primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--accent-fill-hover);
 }
 
-/* The solid half of the ok pair, with the ink that goes on it. Unconditional
-   in both schemes — see the --ok-solid note in the token block. */
+/* The solid half of the ok pair, with the ink that goes on it. */
 .ds-btn--accept {
   background: var(--ok-solid);
   color: var(--ok-ink);
@@ -354,14 +329,15 @@ a.ds-card__head:hover {
 }
 
 .ds-badge--offline,
+.ds-badge--sending {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  animation: ds-tag-pulse 1.2s ease-in-out infinite;
+}
+
 .ds-badge--declined {
   background: var(--surface-3);
   color: var(--text-faint);
-}
-
-.ds-badge--count {
-  background: var(--accent-soft);
-  color: var(--accent);
 }
 
 .ds-dot {
@@ -372,17 +348,17 @@ a.ds-card__head:hover {
   flex: none;
 }
 
-/* Offline reads as hollow as well as grey, so the state survives a greyscale
-   print and a red-green deficiency alike. */
+/*
+ * Offline reads as hollow as well as grey, so the state survives a greyscale print and a red-green
+ * deficiency alike.
+ */
 .ds-badge--offline .ds-dot {
   background: transparent;
   box-shadow: inset 0 0 0 1.5px currentColor;
 }
 
 /* ── Metric ─────────────────────────────────────────────────────────── */
-/* One tile for every measured figure. This replaces three near-identical
-   families which differed only in font size. Borderless like everything
-   else — on a grid of six these used to read as six boxed cells. */
+/* One tile for every measured figure. */
 .ds-metric {
   display: flex;
   flex-direction: column;
@@ -416,8 +392,7 @@ a.ds-card__head:hover {
   color: var(--text-faint);
 }
 
-/* A gauge that is over its line. A tinted fill plus a coloured value carries
-   the signal without turning the console into a warning light. */
+/* A gauge that is over its line. */
 .ds-metric--triggered {
   background: var(--sev-warning-soft);
 }
@@ -445,8 +420,7 @@ a.ds-card__head:hover {
   box-shadow: none;
 }
 
-/* The headline figure on a card — savings totals, the consumer's current
-   draw. Same element, display type, no box of its own. */
+/* The headline figure on a card — savings totals, the consumer's current draw. */
 .ds-metric--hero {
   padding: 0;
   background: transparent;
@@ -464,13 +438,6 @@ a.ds-card__head:hover {
 .ds-metric--hero .ds-metric__sub {
   font-size: var(--fs-sm);
   color: var(--text-muted);
-}
-
-/* Inside a group or a card that already has its own surface. */
-.ds-metric--plain {
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
 }
 
 /* ── Field ──────────────────────────────────────────────────────────── */
@@ -659,9 +626,7 @@ select.ds-input,
 }
 
 /* ── Alert ──────────────────────────────────────────────────────────── */
-/* Severity is a left rail plus a worded chip. The old card painted its whole
-   header bar fluorescent, which made a feed of six alerts unreadable and
-   made severity the loudest thing on the card rather than the title. */
+/* Severity is a left rail plus a worded chip. */
 .ds-alert {
   background: var(--surface);
   border-radius: var(--r);
@@ -724,8 +689,12 @@ select.ds-input,
   color: var(--sev-critical);
 }
 
+/*
+ * Emergency gets a heavier rail as well as its own hue, so it is never told apart from the red
+ * brand chrome by colour alone.
+ */
 .ds-alert--emergency {
-  border-left-color: var(--sev-emergency);
+  border-left: 6px solid var(--sev-emergency);
 }
 .ds-alert--emergency .ds-alert__strip {
   background: var(--sev-emergency-soft);
@@ -804,11 +773,6 @@ select.ds-input,
   color: var(--ok);
 }
 
-.ds-tag--warn {
-  background: var(--sev-warning-soft);
-  color: var(--sev-warning);
-}
-
 .ds-tag--bad {
   background: var(--danger-soft);
   color: var(--danger);
@@ -817,6 +781,24 @@ select.ds-input,
 .ds-tag--auto {
   background: var(--sev-info-soft);
   color: var(--sev-info);
+}
+
+/* In flight: handed to the gateway, delivery not yet confirmed. */
+.ds-brin-emblem {
+  flex: none;
+  display: block;
+}
+
+.ds-tag--sending {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  animation: ds-tag-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes ds-tag-pulse {
+  50% {
+    opacity: 0.55;
+  }
 }
 
 /* ── Severity chip ──────────────────────────────────────────────────── */

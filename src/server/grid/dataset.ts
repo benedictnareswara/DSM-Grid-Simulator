@@ -1,12 +1,6 @@
 /**
- * The replay dataset: the transformed household-power CSV (optionally gzipped),
- * loaded into typed arrays, one per column.
- *
- * Values are held as float32, the same precision the original backend used.
- * These are simulated values with 3–4 significant figures, and float32 halves
- * the memory of the full 2-million-row replay. Timestamps are held as epoch
- * milliseconds and formatted back into the dataset's own "YYYY-MM-DD HH:MM:SS"
- * form.
+ * The replay dataset: the transformed household-power CSV (optionally gzipped), loaded into typed
+ * arrays, one per column.
  */
 
 import { createReadStream, existsSync } from "node:fs";
@@ -14,9 +8,7 @@ import { createInterface } from "node:readline";
 import { createGunzip } from "node:zlib";
 import { resolveFromRoot } from "../env";
 
-// Exactly the columns the simulator reads. The dataset's baked `*_triggered`
-// columns are skipped on purpose: the control logic evaluates them live against
-// the current thresholds.
+// Exactly the columns the simulator reads.
 export const VALUE_COLUMNS = [
   "Global_active_power",
   "Global_reactive_power",

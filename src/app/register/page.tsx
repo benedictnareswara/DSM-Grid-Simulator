@@ -7,17 +7,7 @@ import { AuthShell } from "@/components/AuthShell";
 import { Notice } from "@/components/Notice";
 import type { ApiError } from "@/lib/types";
 
-/**
- * Household self-registration.
- *
- * Deliberately does not sign anyone in on success: the account is created
- * `pending` and cannot authenticate until an operator approves it. Redirecting
- * to a dashboard that would immediately bounce them back would be worse than
- * saying plainly what happens next.
- *
- * There is no role picker, and the backend ignores one if sent — every signup
- * is a consumer.
- */
+/** Household self-registration. */
 export default function RegisterPage() {
   const { register } = useAuth();
 
@@ -29,8 +19,7 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // Mirrors USERNAME_RE in src/app/api/auth/register/route.ts. Checked here only to give a
-  // better message; the backend is the one that decides.
+  // Mirrors USERNAME_RE in src/app/api/auth/register/route.ts.
   const usernameOk = /^[a-z0-9._-]{3,64}$/.test(username.trim().toLowerCase());
   const passwordsMatch = password.length > 0 && password === confirm;
   const canSubmit = usernameOk && email.includes("@") && password.length >= 8 && passwordsMatch;

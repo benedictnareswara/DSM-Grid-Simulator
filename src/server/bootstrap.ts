@@ -7,9 +7,8 @@ import { Hub } from "./realtime/hub";
 import { setRuntime, type Runtime } from "./runtime";
 
 /**
- * Open the database (migrating it), seed the admin, load the dataset and wire
- * up the hub and simulator. server.ts calls this once; tests call it with a
- * throwaway database.
+ * Open the database (migrating it), seed the admin, load the dataset and wire up the hub and
+ * simulator.
  */
 export async function bootRuntime(overrides: { databasePath?: string; dataset?: string } = {}): Promise<Runtime> {
   const settings = env();

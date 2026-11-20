@@ -12,11 +12,7 @@ export const GET = route<IdParams>(async (req, { rt, params }) => {
   return json(userOut(target, approverName(rt.db, target)));
 });
 
-/**
- * Remove an account and everything hanging off it (sessions, responses). The
- * audit entry keeps the username, because after this that string is the only
- * trace the account existed.
- */
+/** Remove an account and everything hanging off it (sessions, responses). */
 export const DELETE = route<IdParams>(async (req, { rt, params }) => {
   const admin = await requireAdmin(req, rt);
   const target = loadTarget(rt.db, (await params).id);

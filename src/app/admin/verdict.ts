@@ -1,27 +1,6 @@
 import type { GridState, SimulationPhase } from "@/lib/types";
 
-/**
- * The one-line state of the grid, for the operator.
- *
- * ## Why this is not in lib/domain.ts
- *
- * `domain.ts` already has `getVerdict()`, which answers the same question for
- * a *household* ("Good time to use power"). This one is operator-only, so it
- * lives next to the admin pages that use it.
- *
- * ## Why the wording differs from the consumer's
- *
- * The household verdict is advice: it says what to *do*, and it is deliberately
- * reassuring at the calm end. This one is a status: it names the condition and
- * the parameter responsible, because the operator's next action is to decide
- * whether to push an alert about it. "Ease off if you can" is useless to
- * someone holding the push button.
- *
- * The severity ordering matches `PARAMETER_META` priority on the
- * server — emergency, frequency, reserve margin, peak load, renewable, price
- * — so the headline names the same condition the engine would rank first if
- * several tripped at once.
- */
+/** The one-line state of the grid, for the operator. */
 
 export type GridLevel = "unknown" | "stable" | "watch" | "strained" | "contingency";
 
@@ -36,15 +15,7 @@ export interface OperatorVerdict {
   cause: string | null;
 }
 
-/**
- * No readings. The right next action depends on why, so the copy branches on
- * the run phase rather than always saying "start the simulation" — which is
- * wrong advice in three of the four phases, and visibly wrong now that this
- * sits in the page's largest text.
- *
- * `gridState` arrives only on a live tick and is never hydrated, so a paused
- * run reloaded in a fresh tab legitimately has a tick count and no readings.
- */
+/** No readings. */
 function unknownFor(phase: SimulationPhase | undefined): OperatorVerdict {
   const detail =
     phase === "paused"
@@ -65,10 +36,7 @@ const STABLE: OperatorVerdict = {
   cause: null,
 };
 
-/**
- * Ordered most to least urgent, matching the engine's own tie-break. The first
- * match wins, so the headline is always the loudest live condition.
- */
+/** Ordered most to least urgent, matching the engine's own tie-break. */
 const CONDITIONS: {
   flag: keyof GridState["parameters"];
   level: GridLevel;
@@ -120,13 +88,7 @@ const CONDITIONS: {
   },
 ];
 
-/**
- * Summarise the grid for the operator: a level, a headline and the reason.
- *
- * Reads the `*_triggered` booleans the backend stamped on the tick, not the
- * raw values against local thresholds — those flags are overwritten by what
- * `triggers()` actually decided, so this follows a retune immediately.
- */
+/** Summarise the grid for the operator: a level, a headline and the reason. */
 export function getOperatorVerdict(
   state: GridState | null,
   phase?: SimulationPhase
@@ -142,14 +104,7 @@ export function getOperatorVerdict(
   return STABLE;
 }
 
-/**
- * How many parameters are over the line. The headline names one; this says
- * whether it is the only one, which changes how urgent the picture is.
- *
- * Reads the same `*_triggered` booleans the gauges do — and those are
- * overwritten on the outgoing payload by whatever `triggers()` decided this
- * tick, never taken from the CSV, so they follow a live retune.
- */
+/** How many parameters are over the line. */
 export function trippedCount(state: GridState | null): number {
   if (!state?.parameters) return 0;
   return CONDITIONS.reduce((n, c) => n + (state.parameters[c.flag] ? 1 : 0), 0);

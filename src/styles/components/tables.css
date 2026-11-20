@@ -51,8 +51,7 @@
   white-space: nowrap;
 }
 
-/* Two things in one cell, stacked — a chip over its label. Lets a column be
-   retired without the value it carried going with it. */
+/* Two things in one cell, stacked — a chip over its label. */
 .ds-cellstack {
   display: flex;
   flex-direction: column;
@@ -138,65 +137,6 @@
 }
 
 /* ── Tiles ──────────────────────────────────────────────────────────── */
-.ds-tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--gap);
-}
-
-.ds-tile {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  padding: var(--pad-card);
-  background: var(--surface);
-  border-radius: var(--r-lg);
-  box-shadow: var(--e1);
-  text-decoration: none;
-  color: inherit;
-  transition: box-shadow var(--t-fast), transform var(--t-fast);
-}
-
-.ds-tile:hover {
-  box-shadow: var(--e2);
-  transform: translateY(-2px);
-}
-
-.ds-tile--attention {
-  background: var(--sev-warning-soft);
-}
-
-.ds-tile__label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-.ds-tile__go {
-  display: inline-flex;
-  color: var(--text-faint);
-  transition: transform var(--t-fast);
-}
-
-.ds-tile:hover .ds-tile__go {
-  transform: translateX(3px);
-}
-
-.ds-tile__value {
-  font-size: var(--fs-3xl);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-
-.ds-tile__sub {
-  font-size: var(--fs-2xs);
-  color: var(--text-faint);
-}
 
 /* ── Row disclosure + lifecycle steps ───────────────────────────────── */
 .ds-disclosure {
@@ -243,9 +183,10 @@
   min-width: 110px;
 }
 
-/* Deliberately still rendered when empty — a missing step in an alert's
-   lifecycle is the interesting part, so it gets a dashed outline rather
-   than disappearing. */
+/*
+ * Deliberately still rendered when empty — a missing step in an alert's lifecycle is the
+ * interesting part, so it gets a dashed outline rather than disappearing.
+ */
 .ds-step--absent {
   border: 1px dashed var(--border-strong);
   background: transparent;
@@ -292,8 +233,7 @@
 }
 
 /* ── Skeleton ───────────────────────────────────────────────────────── */
-/* Replaces the bare "Loading…" text returns. A skeleton keeps the layout at
-   its final height, so the page does not jump when data lands. */
+/* Replaces the bare "Loading…" text returns. */
 .ds-skeleton {
   background: linear-gradient(
     90deg,

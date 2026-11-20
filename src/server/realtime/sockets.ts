@@ -1,16 +1,4 @@
-/**
- * The three WebSocket endpoints, attached to the same HTTP server as the pages.
- *
- *   /ws/admin     operator dashboards (admin access token)
- *   /ws/consumer  household phones (household access token)
- *   /ws/gateway   the ESP32 gateway (GATEWAY_TOKEN)
- *
- * The token travels as `?token=` because a browser's WebSocket constructor
- * can't set headers. Every endpoint authenticates at the handshake. A rejected
- * socket is accepted first and then closed with 4401, because a browser reports
- * a refused upgrade as 1006 with no reason, which looks like the server being
- * down. 4401 tells the client to stop retrying and sign in again.
- */
+/** The three WebSocket endpoints, attached to the same HTTP server as the pages. */
 
 import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
@@ -24,9 +12,7 @@ import { WS_UNAUTHORIZED, type Identity, type ResponsePayload } from "./hub";
 
 const PATHS = new Set(["/ws/admin", "/ws/consumer", "/ws/gateway"]);
 
-// Server-side heartbeat. A half-open socket (Wi-Fi dropped, phone asleep)
-// produces no close event, and a dead gateway left in the pool would keep the
-// badge green while alerts vanish.
+// Server-side heartbeat.
 const HEARTBEAT_MS = 20_000;
 
 type Tracked = WebSocket & { isAlive?: boolean };
@@ -72,11 +58,10 @@ export function createSocketServer(rt: Runtime) {
 
     if (url.pathname === "/ws/gateway") {
       if (!verifyGatewayToken(token)) {
-        // Logged, because a rejected gateway otherwise looks exactly like an
-        // unplugged one. The fix is different: check GATEWAY_TOKEN, then re-flash.
+        // Logged, because a rejected gateway otherwise looks exactly like an unplugged one.
         console.log("[WS] gateway handshake rejected — bad or missing GATEWAY_TOKEN (re-flash the gateway?)");
-        // The ESP32 WebSocket library doesn't surface close reasons, so say it
-        // in a message first; the firmware prints it.
+        // The ESP32 WebSocket library doesn't surface close reasons, so say it in a message first;
+        // the firmware prints it.
         ws.send(JSON.stringify({ type: "error", message: "Invalid gateway token" }), () =>
           ws.close(WS_UNAUTHORIZED, "Invalid gateway token"),
         );
@@ -116,15 +101,7 @@ export function createSocketServer(rt: Runtime) {
     ws.on("close", () => rt.hub.disconnect(ws, "consumer"));
   }
 
-  /**
-   * The gateway's socket. It's the only place a delivery or a response is
-   * recorded, and the only place alerts reach phones or answers reach admins.
-   *
-   *   → relay_alert, relay_response            (server to gateway)
-   *   ← forward_alert    { alert }             delivered to phones as pushed_alert
-   *   ← forward_response { alert_id, accepted, responded_at, user_id, username }
-   *                                            delivered to admins as dsm_response
-   */
+  /** The gateway's socket. */
   function attachGateway(ws: WebSocket): void {
     rt.hub.connect(ws, "gateway");
     ws.on("message", (data) => {
@@ -136,15 +113,17 @@ export function createSocketServer(rt: Runtime) {
       }
       if (msg.type === "forward_alert" && msg.alert && typeof msg.alert === "object") {
         // Stamp delivery first, so history and the live fan-out agree.
+        const alert = msg.alert as { id?: unknown; tick?: unknown };
         markDelivered(rt.db, msg.alert as Record<string, never>);
         rt.hub.broadcastPushedAlert(msg.alert);
+        if (alert.id) rt.hub.notifyAdminDelivered(String(alert.id), typeof alert.tick === "number" ? alert.tick : null);
       } else if (msg.type === "forward_response") {
         const payload: ResponsePayload = {
           alert_id: String(msg.alert_id ?? ""),
           accepted: Boolean(msg.accepted),
           responded_at: String(msg.responded_at ?? new Date().toISOString()),
-          // Identity makes the round trip through the gateway: the admin sees
-          // what the broker actually forwarded.
+          // Identity makes the round trip through the gateway: the admin sees what the broker
+          // actually forwarded.
           user_id: String(msg.user_id ?? ""),
           username: String(msg.username ?? ""),
         };
@@ -153,8 +132,7 @@ export function createSocketServer(rt: Runtime) {
         rt.hub.echoResponseToHousehold(payload);
       }
     });
-    // However the socket ends, it leaves the pool. A leaked gateway socket
-    // would turn fail-closed into fail-silent: green badge, vanishing alerts.
+    // However the socket ends, it leaves the pool.
     ws.on("close", () => rt.hub.disconnect(ws, "gateway"));
     ws.on("error", () => rt.hub.disconnect(ws, "gateway"));
   }

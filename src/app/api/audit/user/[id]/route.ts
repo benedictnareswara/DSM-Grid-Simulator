@@ -8,11 +8,7 @@ import { participationRows, toParticipation } from "@/server/history";
 import { json, requireAdmin, route } from "@/server/http";
 import { auditEntry, userOut } from "@/server/serialize";
 
-/**
- * Everything the account page shows: profile, answers, reliability and audit
- * trail. The audit query matches both what was done *to* the account and what
- * it did itself.
- */
+/** Everything the account page shows: profile, answers, reliability and audit trail. */
 export const GET = route<IdParams>(async (req, { rt, params }) => {
   await requireAdmin(req, rt);
   const user = loadTarget(rt.db, (await params).id);
@@ -22,8 +18,7 @@ export const GET = route<IdParams>(async (req, { rt, params }) => {
   const credit = accepted.reduce((s, e) => s + (e.credit_idr ?? 0), 0);
   const totalKwh = accepted.reduce((s, e) => s + (e.expected_shed_kwh ?? 0), 0);
 
-  // Reliability reads every answer (a fast "no" isn't dependable). Unmeasurable
-  // latencies are left out rather than counted as slow.
+  // Reliability reads every answer (a fast "no" isn't dependable).
   const latencies = entries
     .map((e) => e.latency_seconds)
     .filter((x): x is number => x != null)

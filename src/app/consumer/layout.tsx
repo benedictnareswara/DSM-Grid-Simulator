@@ -7,23 +7,19 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "DSM",
-    // Black-translucent lets the app paint under the iOS status bar, which is
-    // what the safe-area padding in .ds-app__top accounts for.
+    // Black-translucent lets the app paint under the iOS status bar, which is what the safe-area
+    // padding in .ds-app__top accounts for.
     statusBarStyle: "black-translucent",
   },
 };
 
 export const viewport: Viewport = {
-  // No `themeColor` here either — `lib/theme.ts` owns the single meta tag so
-  // that a manual override reaches the installed PWA's chrome too. See the
-  // root layout.
-  // Required for env(safe-area-inset-*) to report non-zero values on notched
-  // devices — without it iOS letterboxes the app instead.
+  // No `themeColor` here either — `lib/theme.ts` owns the single meta tag so that a manual override
+  // reaches the installed PWA's chrome too.
   viewportFit: "cover",
   width: "device-width",
   initialScale: 1,
-  // Zoom is deliberately left enabled. Disabling it is an accessibility
-  // failure, and standalone display already suppresses accidental pinch.
+  // Zoom is deliberately left enabled.
 };
 
 export default function ConsumerLayout({

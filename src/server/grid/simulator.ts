@@ -1,8 +1,4 @@
-/**
- * The simulator replays the dataset one row per tick. Each tick it builds the
- * grid state, runs the control logic, records any alert, autopushes it if that
- * is on, and broadcasts.
- */
+/** The simulator replays the dataset one row per tick. */
 
 import type { DSMAlert, GridState, SimulationPhase, SimulationStatus } from "@/lib/types";
 import type { DB } from "../db/client";
@@ -42,10 +38,7 @@ export class Simulator {
     return this.dataset.length;
   }
 
-  /**
-   * The one run-state value the dashboards render from. `finished` is real:
-   * the tick is parked past the end, so the UI offers Restart instead of Start.
-   */
+  /** The one run-state value the dashboards render from. */
   get phase(): SimulationPhase {
     if (this.totalTicks > 0 && this.currentTick >= this.totalTicks) return "finished";
     if (this.running) return this.paused ? "paused" : "running";
@@ -65,11 +58,7 @@ export class Simulator {
     };
   }
 
-  /**
-   * The grid at the parked tick, whatever the run state. This is what lets an
-   * operator compose a test alert before starting. Clamped to the last row
-   * once finished.
-   */
+  /** The grid at the parked tick, whatever the run state. */
   currentGridState(): GridState | null {
     if (this.totalTicks === 0) return null;
     return this.gridStateAt(Math.min(this.currentTick, this.totalTicks - 1));
@@ -124,11 +113,7 @@ export class Simulator {
     console.log("[Simulator] Reset to tick 0");
   }
 
-  /**
-   * Build the grid state for one row. The six `*_triggered` flags come from
-   * the control logic, never from the dataset, so gauges, alerts and the
-   * consumer verdict all agree with the live thresholds.
-   */
+  /** Build the grid state for one row. */
   gridStateAt(tick: number): GridState {
     const r = this.dataset.row(tick);
     const parameters = {
@@ -176,16 +161,13 @@ export class Simulator {
     return (SEVERITY_PRIORITY[alert.severity] ?? 0) >= SEVERITY_PRIORITY[AUTOPUSH_MIN_SEVERITY];
   }
 
-  /**
-   * Relay qualifying alerts through the same entry point as a manual push.
-   * Autopush removes the click, not the gateway gate: with no gateway the alert
-   * is dropped and marked "esp32_offline".
-   */
+  /** Relay qualifying alerts through the same entry point as a manual push. */
   private autopush(alerts: DSMAlert[]): void {
     for (const alert of alerts) {
       if (!this.qualifiesForAutopush(alert)) continue;
-      alert.auto_push_status = this.hub.gatewayConnected ? "sent" : "esp32_offline";
-      markPushed(this.db, alert, null, true);
+      const relayed = this.hub.gatewayConnected;
+      alert.auto_push_status = relayed ? "sent" : "esp32_offline";
+      markPushed(this.db, alert, null, true, relayed);
       this.hub.relayAlertToGateway(alert);
       console.log(`[Simulator] Autopush [${alert.severity}] ${alert.title} -> ${alert.auto_push_status}`);
     }
@@ -196,7 +178,6 @@ export class Simulator {
     const state = this.gridStateAt(this.currentTick);
     const alerts = this.control.evaluate(state);
     // Persist before anyone decides anything, so the admin feed survives a reload.
-    // It isn't a delivery path: households only see rows with delivered_at set.
     for (const alert of alerts) recordTrigger(this.db, alert);
     if (this.autopushEnabled && alerts.length) this.autopush(alerts);
     this.hub.broadcastTick(state, alerts);

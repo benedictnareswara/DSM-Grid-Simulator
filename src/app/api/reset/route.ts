@@ -4,11 +4,7 @@ import { AUDIT } from "@/server/db/schema";
 import { clientIp, requireAdmin, route } from "@/server/http";
 import { statusResponse } from "@/server/sim-control";
 
-/**
- * Reset the run and clear every dashboard's feed. History is hidden, not
- * deleted, so a reload doesn't bring the feed back and a mid-demo reset
- * doesn't destroy the record.
- */
+/** Reset the run and clear every dashboard's feed. */
 export const POST = route(async (req, { rt }) => {
   const admin = await requireAdmin(req, rt);
   const tickAtReset = rt.simulator.currentTick;

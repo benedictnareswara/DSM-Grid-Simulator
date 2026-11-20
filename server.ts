@@ -1,10 +1,6 @@
 /**
- * The whole app in one process on one port: the Next.js pages and API, the
- * WebSocket endpoints, the simulator loop and the mDNS advertisement the ESP32
- * gateway uses to find this machine.
- *
- *   npm run dev     development (hot reload for pages)
- *   npm start       production (run `npm run build` first)
+ * The whole app in one process on one port: the Next.js pages and API, the WebSocket endpoints, the
+ * simulator loop and the mDNS advertisement the ESP32 gateway uses to find this machine.
  */
 
 import { existsSync } from "node:fs";
@@ -39,15 +35,14 @@ const nextUpgrade = app.getUpgradeHandler();
 const sockets = createSocketServer(rt);
 
 const server = createServer((req, res) => {
-  // The route handlers read the caller's address from this header (for the
-  // audit log and login throttle). Anything a client sent under that name is dropped.
+  // The route handlers read the caller's address from this header (for the audit log and login
+  // throttle).
   req.headers["x-dsm-client-ip"] = (req.socket.remoteAddress ?? "").replace(/^::ffff:/, "");
   void handle(req, res);
 });
 
 server.on("upgrade", (req, socket, head) => {
-  // Ours: /ws/admin, /ws/consumer, /ws/gateway. Everything else (Next's
-  // hot-reload socket in development) goes to Next.
+  // Ours: /ws/admin, /ws/consumer, /ws/gateway.
   if (!sockets.handleUpgrade(req, socket, head)) void nextUpgrade(req, socket, head);
 });
 

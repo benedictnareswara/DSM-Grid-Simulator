@@ -1,14 +1,4 @@
-/**
- * The control logic: checks all six grid parameters on every tick and emits
- * DSM alerts.
- *
- * - The thresholds are live. Every gate compares a raw value from the dataset
- *   against `this.thresholds`, which POST /api/thresholds changes.
- * - Each parameter has a cooldown sized by severity, so it doesn't re-fire
- *   every minute.
- * - At most one alert per tick: when several parameters fire together, the
- *   highest severity wins, then the higher PARAMETER_META priority.
- */
+/** The control logic: checks all six grid parameters on every tick and emits DSM alerts. */
 
 import { randomUUID } from "node:crypto";
 import type { DSMAlert, GridParameters, GridState, Parameter, Severity, Thresholds } from "@/lib/types";
@@ -73,10 +63,7 @@ export class ControlLogic {
     return this.normalRetailPrice(p) * this.thresholds.price_spike_ratio;
   }
 
-  /**
-   * The single answer to "is this parameter over the line". Alerts, the
-   * dashboard gauges and the consumer verdict all read it, so they can't disagree.
-   */
+  /** The single answer to "is this parameter over the line". */
   triggers(p: GridParameters): Record<TriggerFlag, boolean> {
     const t = this.thresholds;
     return {
@@ -92,9 +79,8 @@ export class ControlLogic {
   // ── Building alerts ────────────────────────────────────────────────────────
 
   /**
-   * Fill in what every alert shares: the energy ask (`expected_shed_kwh`) and
-   * the same ask as a setpoint (`target_reduction_w` watts for
-   * `duration_minutes`). The load controller acts on the setpoint.
+   * Fill in what every alert shares: the energy ask (`expected_shed_kwh`) and the same ask as a
+   * setpoint (`target_reduction_w` watts for `duration_minutes`).
    */
   private alert(state: GridState, fields: AlertFields, override: ThrottleOverride = {}): DSMAlert {
     const window = override.durationMinutes || throttleWindowMinutes(fields.severity);
@@ -111,11 +97,7 @@ export class ControlLogic {
     };
   }
 
-  /**
-   * Name what's driving the emergency composite. Only voltage and demand are
-   * on the wire (the ramp term stays in the pipeline), so name the bigger of
-   * those two, each scaled by its own alarm point, or say that neither dominates.
-   */
+  /** Name what's driving the emergency composite. */
   private emergencyLead(p: GridParameters): string {
     const voltageRatio = Math.abs(p.voltage_deviation_pct) / 5.0;
     const demandRatio = p.peak_load_ratio / Math.max(this.thresholds.peak_load_ratio, 0.01);
@@ -133,9 +115,8 @@ export class ControlLogic {
     return `Grid contingency, led by demand: load is ${pyFixed(p.peak_load_ratio, 1)}× forecast.`;
   }
 
-  // Each parameter has a severity function (how bad is this reading) and a
-  // candidate function (what the alert says). compose() calls a candidate with
-  // an operator-chosen severity, so composed alerts carry the real wording.
+  // Each parameter has a severity function (how bad is this reading) and a candidate function (what
+  // the alert says).
 
   severityFor(parameter: Parameter, p: GridParameters): Severity {
     switch (parameter) {
@@ -146,8 +127,7 @@ export class ControlLogic {
       case "reserve_margin":
         return p.reserve_margin_pct < SEVERITY_ESCALATION.reserve_margin ? "emergency" : "critical";
       case "renewable":
-        // The only gate that can emit `info`. Renewables drop to zero every
-        // night; that's only worth acting on when demand is also up.
+        // The only gate that can emit `info`.
         return p.peak_load_ratio > 1.0 ? "warning" : "info";
       case "emergency":
         return p.emergency_score > SEVERITY_ESCALATION.emergency ? "emergency" : "critical";
@@ -228,8 +208,8 @@ export class ControlLogic {
       }
       case "renewable": {
         const r = reward("renewable");
-        // Worded from the grid, not from `severity`: an operator forcing a
-        // severity hasn't changed what is actually happening.
+        // Worded from the grid, not from `severity`: an operator forcing a severity hasn't changed
+        // what is actually happening.
         const demandElevated = p.peak_load_ratio > 1.0;
         return this.alert(
           state,
@@ -262,8 +242,8 @@ export class ControlLogic {
             severity,
             parameter,
             title: "🚨 Grid Emergency",
-            // Lead with the contributor we can name; the composite score alone
-            // tells a household nothing they can act on.
+            // Lead with the contributor we can name; the composite score alone tells a household
+            // nothing they can act on.
             message:
               `${this.emergencyLead(p)} ` +
               `Composite score ${pyFixed(p.emergency_score, 2)} ` +
@@ -318,11 +298,7 @@ export class ControlLogic {
     ["price", "price_spike_triggered"],
   ];
 
-  /**
-   * Build one alert for a parameter without asking its gate, for
-   * POST /api/alert/test. It never reads or starts a cooldown: composing an
-   * alert isn't the same as triggering one.
-   */
+  /** Build one alert for a parameter without asking its gate, for POST /api/alert/test. */
   compose(state: GridState, parameter: Parameter, severity: Severity, override: ThrottleOverride = {}): DSMAlert {
     return this.candidate(parameter, state, severity, override);
   }

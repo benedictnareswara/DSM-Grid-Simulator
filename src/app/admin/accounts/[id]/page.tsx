@@ -17,15 +17,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { fmt } from "@/lib/format";
 import { Notice } from "@/components/Notice";
 
-/**
- * One household's full record.
- *
- * **There is no password here, and there cannot be.** Only a bcrypt hash is
- * stored, which is one-way — it cannot be turned back into the password, and
- * displaying the hash would put the one value worth protecting on screen while
- * telling the operator nothing they could act on. What replaces it is the reset
- * action below: replacement is the useful capability, not inspection.
- */
+/** One household's full record. */
 export default function AccountProfilePage() {
   const params = useParams<{ id: string }>();
   const id = params?.id ?? "";
@@ -92,9 +84,7 @@ export default function AccountProfilePage() {
     return (
       <div className="ds-page">
         <PageHeader title="Account" back={{ href: "/admin/accounts", label: "Accounts" }} />
-        {/* A skeleton at the final shape, like every other admin page. The
-            bare "Loading…" line this replaced collapsed the layout to one row
-            and then snapped it back to a two-column grid of four cards. */}
+        {/* A skeleton at the final shape, like every other admin page. */}
         <div className="ds-grid ds-grid--2">
           <div className="ds-stack">
             <div className="ds-skeleton ds-skeleton--card" />
@@ -142,9 +132,10 @@ export default function AccountProfilePage() {
         <div className="ds-stack">
           {/* ── Profile ── */}
           <div className="ds-card ds-card--strip">
-            {/* No status chip here: PageHeader's subtitle prints `role · status`
-                about 30px above this strip, and the definition list below
-                prints it a third time. One of the three is enough. */}
+            {/*
+                No status chip here: PageHeader's subtitle prints `role · status` about 30px above
+                this strip, and the definition list below prints it a third time.
+            */}
             <div className="ds-card__head">
               <span className="ds-card__title">Profile</span>
             </div>
@@ -263,10 +254,7 @@ export default function AccountProfilePage() {
               </span>
             </div>
             <div className="ds-card__body">
-              {/* Can this household be counted on? Accept rate alone does not
-                  answer it — an operator shedding load in a contingency needs
-                  to know whether the yes arrives in time to matter, which is
-                  why the score weighs speed alongside willingness. */}
+              {/* Can this household be counted on? */}
               <div className="ds-row">
                 <span>Reliability</span>
                 <span className="ds-muted">
@@ -293,8 +281,10 @@ export default function AccountProfilePage() {
                 </span>
               </div>
 
-              {/* The list below had no heading, so it read as four more summary
-                  rows rather than as individual answers. */}
+              {/*
+                  The list below had no heading, so it read as four more summary rows rather than as
+                  individual answers.
+              */}
               <p className="ds-eyebrow ds-eyebrow--spaced">Recent answers</p>
 
               {profile.recent_responses.length === 0 ? (
@@ -343,8 +333,10 @@ export default function AccountProfilePage() {
                   <div key={a.id} className="ds-row">
                     <span className="ds-row__mono">{a.action}</span>
                     <span className="ds-muted">
-                      {/* Who did it — "system" when nobody was signed in, e.g.
-                          the account's own registration. */}
+                      {/*
+                          Who did it — "system" when nobody was signed in, e.g. the account's own
+                          registration.
+                      */}
                       {a.actor_label}
                     </span>
                     <span className="ds-row__mono">{fmt(a.created_at)}</span>
@@ -359,13 +351,7 @@ export default function AccountProfilePage() {
   );
 }
 
-/**
- * Reliability as a chip, in three bands.
- *
- * Banded rather than a continuous scale because the operator is making a
- * three-way call — lean on them, expect them, don't count on them — not
- * reading a ranking to two significant figures.
- */
+/** Reliability as a chip, in three bands. */
 function ScoreBadge({ score }: { score: number }) {
   const band = score >= 70 ? "high" : score >= 40 ? "" : "low";
   return (

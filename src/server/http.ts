@@ -1,9 +1,4 @@
-/**
- * Shared plumbing for the route handlers: errors, auth guards, body parsing.
- *
- * Errors keep the original API's shape, `{ "detail": { "code", "message" } }`,
- * so the pages can switch on a machine-readable code such as `account_pending`.
- */
+/** Shared plumbing for the route handlers: errors, auth guards, body parsing. */
 
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -41,10 +36,7 @@ export function route<C = object>(handler: Handler<C>) {
   };
 }
 
-/**
- * The caller's address. server.ts sets this header from the socket and strips
- * any client-sent copy, so it can't be spoofed into the audit log.
- */
+/** The caller's address. */
 export function clientIp(req: Request): string | null {
   return req.headers.get("x-dsm-client-ip");
 }
@@ -79,11 +71,7 @@ export function readQuery<T extends z.ZodType>(req: Request, schema: T): z.infer
 
 // ── Auth guards ──────────────────────────────────────────────────────────────
 
-/**
- * The signed-in account. Re-reads the row and its status on every request, so
- * suspending or deleting someone takes effect immediately rather than when
- * their access token expires.
- */
+/** The signed-in account. */
 export async function currentUser(req: Request, rt: Runtime): Promise<UserRow> {
   const header = req.headers.get("authorization") ?? "";
   const token = header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
@@ -122,8 +110,7 @@ export async function requireConsumer(req: Request, rt: Runtime): Promise<UserRo
 }
 
 // ── Login/register throttle ──────────────────────────────────────────────────
-// Enough to stop a script hammering a weak password. Process-local, so it
-// resets on restart; a real deployment would put this in front of the app.
+// Enough to stop a script hammering a weak password.
 
 export const AUTH_ATTEMPT_LIMIT = 5;
 export const AUTH_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;

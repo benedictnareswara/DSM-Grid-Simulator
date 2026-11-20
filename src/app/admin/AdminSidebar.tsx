@@ -13,30 +13,10 @@ import {
   apiGetUserCounts,
 } from "@/hooks/useGridWebSocket";
 import { useAdminSocket } from "./GridSocketProvider";
+import { BrinEmblem } from "@/components/Brand";
 import type { ThemePreference } from "@/lib/theme";
 
-/**
- * The admin shell's navigation rail.
- *
- * ## What this replaced
- *
- * Three separate things said where you were and where you could go: five text
- * chips wedged into the page header under the `<h1>`, five `SummaryTiles` on
- * the dashboard that were navigation wearing a count, and two card-head "View
- * all" links. The tiles were the worst of it — two of the five pointed at the
- * same route, and none of them existed anywhere except the dashboard, so the
- * counts they carried vanished the moment you navigated.
- *
- * All three collapse into this: one row per destination, carrying its own
- * count, present on every admin screen.
- *
- * ## Counts come from the /count endpoints
- *
- * Not from any page's arrays. The dashboard's feed is a 200-row hydrate
- * window — correct for a feed, wrong for a total, which would silently stop
- * climbing at 200. That rule predates this component; it is restated here
- * because the tiles that used to hold it are gone.
- */
+/** The admin shell's navigation rail. */
 
 interface NavItem {
   href: string;
@@ -94,9 +74,7 @@ export function AdminSidebar() {
   const [counts, setCounts] = useState<Counts>(EMPTY_COUNTS);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Refetch on all three nonces. `responsesNonce` is the one that is easy to
-  // forget — a household answering moves the participation total, and without
-  // it the badge sits frozen until the operator happens to click something.
+  // Refetch on all three nonces.
   useEffect(() => {
     let cancelled = false;
     Promise.all([
@@ -116,8 +94,7 @@ export function AdminSidebar() {
         });
       })
       .catch(() => {
-        // A missing badge is not a reason to break the nav. The rows still
-        // work; they just carry no number.
+        // A missing badge is not a reason to break the nav.
       });
     return () => {
       cancelled = true;
@@ -129,8 +106,7 @@ export function AdminSidebar() {
 
   return (
     <>
-      {/* Narrow-screen bar. The rail is off-canvas below 700px, so this is the
-          only thing holding the menu button and the brand at that width. */}
+      {/* Narrow-screen bar. */}
       <div className="ds-topbar">
         <button
           className="ds-btn ds-btn--icon ds-btn--ghost"
@@ -140,7 +116,10 @@ export function AdminSidebar() {
         >
           <Icon name="menu" size={20} />
         </button>
-        <span className="ds-topbar__brand">DSM Grid</span>
+        <span className="ds-topbar__brand">
+          <BrinEmblem size={24} />
+          DSM Grid
+        </span>
         <StatusDots connected={connected} esp32Connected={esp32Connected} />
       </div>
 
@@ -154,10 +133,10 @@ export function AdminSidebar() {
 
       <aside className={`ds-sidebar ${drawerOpen ? "ds-sidebar--open" : ""}`}>
         <div className="ds-sidebar__brand">
-          <span className="ds-sidebar__mark" aria-hidden="true" />
+          <BrinEmblem size={30} />
           <span className="ds-sidebar__wordmark">
             DSM Grid
-            <span>Operator console</span>
+            <span>Operator console · BRIN</span>
           </span>
         </div>
 
@@ -172,9 +151,6 @@ export function AdminSidebar() {
                 className={`ds-navitem ${active ? "ds-navitem--active" : ""}`}
                 aria-current={active ? "page" : undefined}
                 // Closes the narrow-screen drawer on the click that navigates.
-                // Doing it in an effect on `pathname` instead is a cascading
-                // render, and the React Compiler rules reject it — correctly,
-                // since the click is the actual event.
                 onClick={() => setDrawerOpen(false)}
               >
                 <Icon name={item.icon} size={18} className="ds-navitem__icon" />
@@ -194,10 +170,6 @@ export function AdminSidebar() {
           })}
         </nav>
 
-        {/* Live state, on every admin screen rather than only the dashboard —
-            the gateway being down is the single most consequential thing an
-            operator can fail to notice, and it used to be invisible from four
-            of the five pages. */}
         <div className="ds-sidebar__status">
           <StatusRow
             label="Readings"

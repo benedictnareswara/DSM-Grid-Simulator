@@ -1,7 +1,6 @@
 /**
- * Advertises this server on the LAN as `_dsm._tcp` over mDNS, so the ESP32
- * gateway can find it without an IP address compiled into its firmware. A DHCP
- * change on the laptop then costs nothing: the gateway just looks it up again.
+ * Advertises this server on the LAN as `_dsm._tcp` over mDNS, so the ESP32 gateway can find it
+ * without an IP address compiled into its firmware.
  */
 
 import { Bonjour, type Service } from "bonjour-service";

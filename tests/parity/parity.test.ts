@@ -1,12 +1,4 @@
-/**
- * Parity with the original Python backend.
- *
- * fixtures/python-golden.json was produced by the Python control logic and
- * incentive model (the last Python commit) over data/sample.csv.gz. These tests
- * replay the same rows through the TypeScript port and require identical
- * output: every trigger flag on every tick, every alert (text, severity, maths),
- * composed alerts, and the incentive functions.
- */
+/** Parity with the original Python backend. */
 
 import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";

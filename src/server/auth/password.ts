@@ -2,8 +2,7 @@ import bcrypt from "bcryptjs";
 
 const BCRYPT_ROUNDS = 12;
 
-// bcrypt only reads the first 72 bytes. Rejecting longer passwords up front keeps
-// two passwords that share those 72 bytes from both working.
+// bcrypt only reads the first 72 bytes.
 export const MAX_PASSWORD_BYTES = 72;
 
 export async function hashPassword(password: string): Promise<string> {

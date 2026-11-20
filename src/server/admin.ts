@@ -1,8 +1,4 @@
-/**
- * Guards for account management. An admin can't act on their own account, and
- * the last active admin can't be removed. Locking yourself out of a local demo
- * should be impossible, not something the docs explain how to undo.
- */
+/** Guards for account management. */
 
 import { and, count, eq, ne } from "drizzle-orm";
 import type { Conn } from "./db/client";

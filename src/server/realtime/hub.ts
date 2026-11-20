@@ -1,12 +1,6 @@
 /**
- * The WebSocket hub: three pools of sockets (admin, consumer, gateway) and what
- * each is allowed to hear.
- *
- * The rule that matters: alerts and responses go through the ESP32 gateway,
- * and it fails closed. Only the gateway receives `relay_alert` /
- * `relay_response`, and only its own `forward_alert` / `forward_response` echo
- * reaches the other side. With no gateway connected, nothing is delivered.
- * There is no direct admin↔consumer path.
+ * The WebSocket hub: three pools of sockets (admin, consumer, gateway) and what each is allowed to
+ * hear. Alerts and answers only cross via the gateway's echo; with no gateway, nothing is delivered.
  */
 
 import { WebSocket } from "ws";
@@ -37,8 +31,7 @@ export class Hub {
     consumer: new Set(),
     gateway: new Set(),
   };
-  // Who is behind each dashboard socket. Used to force a suspended or deleted
-  // user off a live socket, and to count households rather than open tabs.
+  // Who is behind each dashboard socket.
   readonly identities = new Map<WebSocket, Identity>();
 
   /** Whether a gateway is attached: the gate every alert path checks. */
@@ -56,12 +49,12 @@ export class Hub {
       this.broadcastGatewayStatus();
     } else if (pool === "consumer") {
       this.broadcastClientCount();
-      // Lets the phone tell "no alerts because the grid is calm" apart from
-      // "no alerts because nothing can reach me".
+      // Lets the phone tell "no alerts because the grid is calm" apart from "no alerts because
+      // nothing can reach me".
       this.sendTo(ws, this.gatewayStatusMsg(), "consumer");
     } else {
-      // A dashboard opened while the gateway is already up would otherwise show
-      // it offline until the next change.
+      // A dashboard opened while the gateway is already up would otherwise show it offline until
+      // the next change.
       this.sendTo(ws, this.gatewayStatusMsg(), "admin");
       this.sendTo(ws, this.clientCountMsg(), "admin");
     }
@@ -81,11 +74,7 @@ export class Hub {
 
   // ── Telemetry ──────────────────────────────────────────────────────────────
 
-  /**
-   * Admins get the tick with its alerts. Consumers get the same telemetry with
-   * `alerts: []`, rebuilt rather than filtered, so no alert can slip through
-   * outside the gateway path.
-   */
+  /** Admins get the tick with its alerts. */
   broadcastTick(state: GridState, alerts: DSMAlert[]): void {
     this.sendToPool("admin", JSON.stringify({ type: "tick", state, alerts }));
     this.sendToPool("consumer", JSON.stringify({ type: "tick", state, alerts: [] }));
@@ -103,6 +92,14 @@ export class Hub {
     this.sendToPool("consumer", JSON.stringify({ type: "pushed_alert", alert }));
   }
 
+  /**
+   * Tell dashboards the gateway confirmed an alert, so they refetch instead of showing the row as
+   * it stood a second earlier.
+   */
+  notifyAdminDelivered(alertId: string, tick: number | null): void {
+    this.sendToPool("admin", JSON.stringify({ type: "alert_delivered", alert_id: alertId, tick }));
+  }
+
   /** A household's answer goes ONLY to the gateway. Without one, the admin never hears it. */
   relayResponseToGateway(response: ResponsePayload): void {
     this.sendToPool("gateway", JSON.stringify({ type: "relay_response", ...response }));
@@ -113,11 +110,7 @@ export class Hub {
     this.sendToPool("admin", JSON.stringify({ type: "dsm_response", ...response }));
   }
 
-  /**
-   * Reflect a household's own answer to their other open devices. Same
-   * gateway-gated handler as notifyAdminResponse, and it carries an alert id,
-   * never an alert, so it can't show a phone anything new.
-   */
+  /** Reflect a household's own answer to their other open devices. */
   echoResponseToHousehold(response: ResponsePayload): void {
     if (!response.user_id) return;
     const msg = JSON.stringify({
@@ -198,11 +191,7 @@ export class Hub {
     this.sendTo(ws, JSON.stringify({ type: "thresholds", data: thresholds }), "admin");
   }
 
-  /**
-   * Close every socket belonging to one account (suspend, delete, password
-   * reset). An access JWT can't be revoked, so without this a removed user
-   * keeps streaming until it expires.
-   */
+  /** Close every socket belonging to one account (suspend, delete, password reset). */
   disconnectUser(userId: string): number {
     const doomed = [...this.identities].filter(([, ident]) => ident.user_id === userId).map(([ws]) => ws);
     for (const ws of doomed) {
@@ -224,11 +213,7 @@ export class Hub {
 
   // ── Sending ────────────────────────────────────────────────────────────────
 
-  /**
-   * Fire the notification disconnect() would have after a reap. The badge is
-   * the operator's first diagnostic, so it must not stay green for a gateway
-   * that died.
-   */
+  /** Fire the notification disconnect() would have after a reap. */
   private announcePoolChange(pool: Pool): void {
     if (pool === "gateway") this.broadcastGatewayStatus();
     else if (pool === "consumer") this.broadcastClientCount();

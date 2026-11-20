@@ -1,12 +1,4 @@
-/**
- * Two kinds of credential, and they aren't the same thing:
- *
- * - Users get a 15-minute access JWT plus a rotating, revocable refresh token.
- * - The ESP32 gateway gets one static shared secret (GATEWAY_TOKEN), compared
- *   in constant time. It's a device with no clock, so it can't run a refresh
- *   cycle, and in a fail-closed system a gateway with an expired token means
- *   the whole alert path is down.
- */
+/** Short-lived access JWTs and rotating refresh tokens. */
 
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { and, eq, isNull } from "drizzle-orm";
@@ -15,9 +7,7 @@ import type { Conn, DB } from "../db/client";
 import { refreshTokens, STATUS_ACTIVE, users, type UserRow } from "../db/schema";
 import { env } from "../env";
 
-// Short, because an access token can't be revoked. Suspending a user takes
-// effect within this window at worst (and immediately for REST, which re-reads
-// the account on every request).
+// Short, because an access token can't be revoked.
 export const ACCESS_TOKEN_TTL_MINUTES = 15;
 export const REFRESH_TOKEN_TTL_DAYS = 30;
 
@@ -65,11 +55,7 @@ export function issueRefreshToken(db: Conn, user: UserRow): string {
   return raw;
 }
 
-/**
- * Exchange a refresh token for a fresh one. A token that was already spent
- * means a replay or a stolen copy, and there's no telling which, so every
- * session for that user is revoked.
- */
+/** Exchange a refresh token for a fresh one. */
 export function rotateRefreshToken(db: DB, raw: string): { user: UserRow; token: string } | null {
   return db.transaction((tx) => {
     const row = tx.select().from(refreshTokens).where(eq(refreshTokens.tokenHash, hashRefresh(raw))).get();
@@ -90,7 +76,6 @@ export function rotateRefreshToken(db: DB, raw: string): { user: UserRow; token:
   });
 }
 
-/** Silent when the token is unknown, so sign-out can't be used to test whether a token was ever valid. */
 export function revokeRefreshToken(db: DB, raw: string): void {
   db.update(refreshTokens)
     .set({ revokedAt: new Date() })

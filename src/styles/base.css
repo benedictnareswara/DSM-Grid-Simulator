@@ -34,27 +34,19 @@ textarea {
   letter-spacing: inherit;
 }
 
-/* Anything that states a measured quantity. Grouped here rather than repeated
-   on thirty classes: a figure that reflows as it ticks is unreadable. Note
-   these are *not* monospace — a proportional face with tabular figures reads
-   as a number in a product, where mono reads as a number in a terminal. */
+/* Anything that states a measured quantity. */
 .ds-metric__value,
 .ds-table__num,
 .ds-row__mono,
-.ds-tile__value,
-.ds-readout__item,
 .ds-score,
-.ds-statusline,
 .ds-ledger__amount,
 .ds-range-group__value,
-.ds-badge--count,
 .ds-progress-legend {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
-/* Mono survives for identifiers only — an alert id, a raw timestamp, an
-   audit action verb. Things you compare character by character. */
+/* Mono survives for identifiers only — an alert id, a raw timestamp, an audit action verb. */
 .ds-table__mono,
 .ds-alert__time,
 .ds-card__meta,

@@ -1,14 +1,4 @@
-/**
- * Python-compatible rounding and fixed-point formatting.
- *
- * The incentive and alert maths were written against Python's `round()` and
- * `f"{x:.2f}"`, which round exact ties to even. JS's `Math.round` and `toFixed`
- * round ties up. That only matters on exact binary ties (2.5, 0.125, ...), but
- * those do come up in the money maths, so the parity tests would notice.
- *
- * Works on the exact decimal expansion of the double, which `toFixed(100)` gives
- * for every magnitude this code sees.
- */
+/** Python-compatible rounding and fixed-point formatting. */
 
 export function pyFixed(x: number, digits: number): string {
   if (!Number.isFinite(x)) return String(x);

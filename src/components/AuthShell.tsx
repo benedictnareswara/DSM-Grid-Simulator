@@ -1,28 +1,7 @@
 import type { ReactNode } from "react";
+import { BrinEmblem } from "./Brand";
 
-/**
- * The sign-in / registration shell: form on the left, grid artwork on the right.
- *
- * Both auth pages share the centred column this replaced — it carried the same
- * three-element branding block and the same 400px width, twice. That part is
- * unchanged; what is new is the panel beside it.
- *
- * ## The artwork is drawn, not shipped
- *
- * No image file. It is a layered radial-gradient mesh with an inline SVG trace
- * over it, which means it costs nothing to download, scales to any panel size
- * without a second asset, and recolours from the same tokens as the rest of
- * the page — so it is correct in dark mode by construction rather than by
- * having a second export.
- *
- * The trace is a frequency line, not decoration for its own sake: this is the
- * sign-in page for a grid console, and the readings floating on it are the
- * ones the console is about. It animates by drifting a dash offset, which the
- * global `prefers-reduced-motion` block already zeroes.
- *
- * Below 900px the panel is removed entirely and the form centres, which is
- * what the old layout did at every width.
- */
+/** The sign-in / registration shell: form on the left, grid artwork on the right. */
 export function AuthShell({
   subtitle,
   children,
@@ -35,9 +14,13 @@ export function AuthShell({
       <div className="ds-auth-split__form">
         <div className="ds-auth">
           <header className="ds-auth__brand">
+            <BrinEmblem size={56} className="ds-auth__partner" />
             <p className="ds-eyebrow">Demand Side Management</p>
             <h1 className="ds-auth__title">DSM Grid</h1>
             <p className="ds-header__sub">{subtitle}</p>
+            <p className="ds-auth__collab">
+              In collaboration with Badan Riset dan Inovasi Nasional (BRIN)
+            </p>
           </header>
           {children}
         </div>
@@ -50,11 +33,7 @@ export function AuthShell({
   );
 }
 
-/**
- * The panel's contents. Purely decorative — the whole `<aside>` is
- * `aria-hidden`, so nothing here needs a text alternative and nothing here
- * may carry information the form does not.
- */
+/** The panel's contents. */
 function GridArtwork() {
   return (
     <div className="ds-artwork">
@@ -66,8 +45,7 @@ function GridArtwork() {
         preserveAspectRatio="xMidYMid slice"
         fill="none"
       >
-        {/* Three passes of the same wave at different amplitudes and speeds.
-            One line reads as a logo; three read as a signal. */}
+        {/* Three passes of the same wave at different amplitudes and speeds. */}
         <path
           className="ds-artwork__wave ds-artwork__wave--1"
           d="M-50 200 Q 25 120 100 200 T 250 200 T 400 200 T 550 200 T 700 200"
@@ -82,9 +60,7 @@ function GridArtwork() {
         />
       </svg>
 
-      {/* The six parameters, as the console would print them. Values are
-          static: this page has no session, so it has no readings — inventing
-          live-looking ones would be a lie told by the login screen. */}
+      {/* The six parameters, as the console would print them. */}
       <div className="ds-artwork__readout">
         <Reading label="Frequency" value="50.00 Hz" />
         <Reading label="Reserve" value="18.4%" />

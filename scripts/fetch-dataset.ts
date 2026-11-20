@@ -1,10 +1,6 @@
 /**
- * `npm run data:full`: downloads the full 4-year replay (about 230 MB) into
- * data/full.csv.gz and checks its SHA-256. Then set DATASET=full in .env.
- *
- * The file is a GitHub Release asset of this repository, under the tag below.
- * The URL comes from DATASET_URL if set, otherwise from this clone's `origin`
- * remote, so forks work without editing anything.
+ * `npm run data:full`: downloads the full 4-year replay (about 230 MB) into data/full.csv.gz and
+ * checks its SHA-256.
  */
 
 import { execSync } from "node:child_process";

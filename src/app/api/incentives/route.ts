@@ -3,10 +3,7 @@ import { THROTTLE_WINDOW_MINUTES_BY_SEVERITY } from "@/server/grid/constants";
 import * as incentives from "@/server/grid/incentives";
 import { currentUser, json, route } from "@/server/http";
 
-/**
- * The model itself, served rather than copied into each client. The pages use
- * it to preview what accepting an alert is worth before there's a response.
- */
+/** The model itself, served rather than copied into each client. */
 export const GET = route(async (req, { rt }) => {
   await currentUser(req, rt);
   const model: IncentiveModel = {

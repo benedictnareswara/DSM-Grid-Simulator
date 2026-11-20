@@ -1,7 +1,6 @@
 /**
- * Test harness: a fresh runtime on a throwaway SQLite file, route handlers
- * called directly (no Next build needed), and a real WebSocket server for the
- * realtime tests.
+ * Test harness: a fresh runtime on a throwaway SQLite file, route handlers called directly (no Next
+ * build needed), and a real WebSocket server for the realtime tests.
  */
 
 import { mkdtempSync } from "node:fs";

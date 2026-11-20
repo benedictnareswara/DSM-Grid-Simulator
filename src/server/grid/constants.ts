@@ -1,8 +1,4 @@
-/**
- * Simulation, threshold and alert constants. These are not user settings; the
- * operator changes thresholds at runtime from the dashboard. For why each number
- * is what it is, see docs/ARCHITECTURE.md.
- */
+/** Simulation, threshold and alert constants. */
 
 import { DEFAULT_THRESHOLDS, type Parameter, type Severity, type Thresholds } from "@/lib/types";
 
@@ -16,16 +12,11 @@ export const MAX_TICK_INTERVAL_MS = 5000;
 export const THRESHOLDS: Readonly<Thresholds> = DEFAULT_THRESHOLDS;
 
 export type ThresholdKey = keyof Thresholds;
-export const THRESHOLD_KEYS = Object.keys(THRESHOLDS) as ThresholdKey[];
 
-// Retail = wholesale × this. Must match the pipeline's RETAIL_MARGIN_FACTOR,
-// which produced `retail_price_idr`. The P6 gate is relative: a price "spikes"
-// against the normal retail price for *this hour*.
+// Retail = wholesale × this.
 export const RETAIL_MARGIN = 1.35;
 
-// Where a parameter escalates from its base severity to the tier above. Not
-// remotely settable on purpose: these decide how loud an alert is, not whether
-// it fires.
+// Where a parameter escalates from its base severity to the tier above.
 export const SEVERITY_ESCALATION = {
   peak_load: 2.0, // ratio: critical above, warning below
   frequency: 0.5, // |Hz|: emergency above, critical below
@@ -43,9 +34,7 @@ export const SEVERITY_PRIORITY: Record<Severity, number> = {
   emergency: 3,
 };
 
-// After a parameter fires it is quiet for this many ticks (one tick = one
-// simulated minute). Urgent alerts come back sooner. Info is the longest because
-// its only source, low renewables at low demand, lasts all night.
+// After a parameter fires it is quiet for this many ticks (one tick = one simulated minute).
 export const ALERT_COOLDOWN_TICKS = 300;
 export const COOLDOWN_TICKS_BY_SEVERITY: Record<Severity, number> = {
   emergency: 60,
@@ -54,8 +43,7 @@ export const COOLDOWN_TICKS_BY_SEVERITY: Record<Severity, number> = {
   info: 600,
 };
 
-// How long an alert's energy ask is spread over, in real minutes. More urgent
-// means a shorter window, so the same energy is asked for harder (in watts).
+// How long an alert's energy ask is spread over, in real minutes.
 export const THROTTLE_WINDOW_MINUTES_BY_SEVERITY: Record<Severity, number> = {
   emergency: 60,
   critical: 90,
@@ -65,17 +53,16 @@ export const THROTTLE_WINDOW_MINUTES_BY_SEVERITY: Record<Severity, number> = {
 export const DEFAULT_THROTTLE_WINDOW_MINUTES = 120;
 
 // ── Autopush ──────────────────────────────────────────────────────────────────
-// Autopush removes the operator's click, not the gateway gate: delivery still
-// completes only when the gateway echoes forward_alert back.
+// Autopush removes the operator's click, not the gateway gate: delivery still completes only when
+// the gateway echoes forward_alert back.
 export const AUTOPUSH_DEFAULT_ENABLED = false;
 export const AUTOPUSH_MIN_SEVERITY: Severity = "critical";
 
 // ── Parameter importance: one table, one order ───────────────────────────────
-//   priority            breaks ties within a severity band (higher wins)
-//   reward_idr_per_kwh  what a household is paid per kWh shifted (price: computed live)
-//   shed_kwh            base energy ask before the severity multiplier
-// priority ranks urgency, shed_kwh ranks the size of the ask, so they don't
-// have to agree: price asks for more than renewable while being less urgent.
+// priority breaks ties within a severity band (higher wins) reward_idr_per_kwh what a household is
+// paid per kWh shifted (price: computed live) shed_kwh base energy ask before the severity
+// multiplier priority ranks urgency, shed_kwh ranks the size of the ask, so they don't have to
+// agree: price asks for more than renewable while being less urgent.
 export const PARAMETER_META: Record<
   Parameter,
   { priority: number; reward_idr_per_kwh: number | null; shed_kwh: number }

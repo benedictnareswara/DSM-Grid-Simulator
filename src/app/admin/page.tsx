@@ -35,26 +35,7 @@ import {
 } from "@/lib/types";
 import { useAuth } from "@/hooks/useAuth";
 
-/*
- * Deferred chunks.
- *
- * Everything below is loaded on demand rather than in the page's own bundle.
- * `GridCharts` is the expensive one: it pulls Recharts, which minifies to
- * ~400 kB — about 85% of everything this route ships that the framework does
- * not, and roughly a third of the whole page weight. It renders below the
- * alert feed and is not on the path to first paint, so holding the operator's
- * first render hostage to it was pure cost.
- *
- * The three panels are modals behind operator toggles (`tuning`, `testing`,
- * `confirmReset`). None of them can be on screen at load, so none of them
- * belong in the initial payload.
- *
- * `ssr: false` throughout: these are client-only surfaces (Recharts measures
- * the DOM, the panels are dialogs), so prerendering them buys nothing. The
- * chart carries a skeleton at its final height so the deferred load does not
- * shift the layout underneath it — the modals need no placeholder, since
- * nothing is visible until the operator opens one anyway.
- */
+/* Deferred chunks. */
 const GridCharts = dynamic(() => import("./GridCharts").then((m) => m.GridCharts), {
   ssr: false,
   loading: () => <div className="ds-card ds-chart ds-skeleton ds-skeleton--card" />,
@@ -74,13 +55,7 @@ const ResetConfirm = dynamic(() => import("./ResetConfirm").then((m) => m.ResetC
   ssr: false,
 });
 
-/**
- * Human-readable run state. `phase` is derived on the backend.
- *
- * `idle` reads "Ready", not "Stopped" — with the Stop button gone it is only
- * reachable from a fresh boot or a Reset, both of which leave the simulator at
- * tick 0 waiting to be started.
- */
+/** Human-readable run state. */
 const PHASE_LABEL: Record<SimulationPhase, string> = {
   idle: "Ready",
   running: "Running",
@@ -106,20 +81,16 @@ export default function AdminDashboard() {
     resetNonce,
     accountsNonce,
     responsesNonce,
-    // The live trip points, over the socket rather than a mount-only fetch —
-    // an operator retuning in one tab now relabels the gauges in every other.
+    // The live trip points, over the socket rather than a mount-only fetch — an operator retuning
+    // in one tab now relabels the gauges in every other.
     thresholds,
-    // Shared with the sidebar rather than opened here. Calling
-    // useGridWebSocket again in this file would give the tab two admin
-    // sockets — see the note in GridSocketProvider.tsx.
+    // Shared with the sidebar rather than opened here.
     historyNonce,
     bumpHistory,
   } = useAdminSocket();
 
-  // The socket was rejected and could not be refreshed — the account was
-  // suspended or deleted while this tab was open. The hook has already dropped
-  // the session; this is what gets the operator off a dashboard they are no
-  // longer allowed to see.
+  // The socket was rejected and could not be refreshed — the account was suspended or deleted while
+  // this tab was open.
   useEffect(() => {
     if (authFailed) router.replace("/login");
   }, [authFailed, router]);
@@ -131,68 +102,46 @@ export default function AdminDashboard() {
   const [tuning, setTuning] = useState(false);
   const [testing, setTesting] = useState(false);
 
-  // The server is the authority on run state. `phase` collapses running+paused
-  // (plus the "finished" case neither boolean can express) into the single
-  // value the controls switch on, so the UI cannot invent a state the backend
-  // doesn't have. Derived rather than mirrored, which keeps tabs in step.
+  // The server is the authority on run state.
   const phase: SimulationPhase = status?.phase ?? "idle";
 
-  // Adjust the slider when the *server's* speed changes (React's documented
-  // "adjust state during render" pattern — an effect here would cascade).
-  // Local drags aren't clobbered: they set the same value they just requested.
+  // Adjust the slider when the *server's* speed changes (React's documented "adjust state during
+  // render" pattern — an effect here would cascade).
   if (status && status.tick_interval_ms !== serverSpeed) {
     setServerSpeed(status.tick_interval_ms);
     setSpeed(status.tick_interval_ms);
   }
 
-  // The feed and participation log, restored from the database. This is what makes
-  // the dashboard survive a logout, a reload, a token refresh or a backend
-  // restart: before this, every alert and every outcome lived only in React
-  // state, so closing the tab erased the operator's whole session.
+  // The feed and participation log, restored from the database.
   const [stored, setStored] = useState<PersistedAlert[]>([]);
   const [savings, setSavings] = useState<SavingsSummary | null>(null);
-  // The served shed and window tables. The test-alert panel previews the
-  // setpoint it is about to ask for; restating those tables here would be the
-  // fifth copy of the mistake `/api/incentives` exists to prevent.
+  // The served shed and window tables.
   const [incentives, setIncentives] = useState<IncentiveModel | null>(null);
   const [hydrated, setHydrated] = useState(false);
-  // Which half of the feed is showing. Pending is the default: the blocking
-  // work is what an operator opens this page for.
+  // Which half of the feed is showing.
   const [feedView, setFeedView] = useState<"pending" | "all">("pending");
 
   const { outcomeOf, pushAlert, ignoreAlert, undoIgnore, pushing, clear } =
     useAlertOutcomes({ stored, onMutated: bumpHistory });
 
-  // A reset purges every feed system-wide, and this state describes alerts that
-  // no longer exist. Same adjust-during-render pattern as the speed slider
-  // above — an effect would be a second render pass and would trip the React
-  // Compiler's set-state-in-effect rule.
   const [nonceSeen, setNonceSeen] = useState(resetNonce);
   if (resetNonce !== nonceSeen) {
     setNonceSeen(resetNonce);
     clear();
-    // The backend soft-clears the rows too, so a refetch would return nothing;
-    // dropping them here avoids showing a dead feed until the next load.
+    // The backend soft-clears the rows too, so a refetch would return nothing; dropping them here
+    // avoids showing a dead feed until the next load.
     setStored([]);
     setSavings(null);
   }
 
-  // Hydrate from the database. Re-runs on `historyNonce`, which every operator
-  // action bumps, and on `responsesNonce`, which a household answering bumps.
-  //
-  // That second dependency is the whole fix for a stale dashboard. Everything
-  // aggregate on this page — the participation tile, the energy-saved tile, the
-  // savings chart — is derived from what this effect fetches, and it used to
-  // re-run only when the *operator* did something. So an operator watching a
-  // push land could see an alert row's tally climb while the totals above it
-  // stayed frozen at whatever they were when they last clicked Push.
+  // Hydrate from the database.
   useEffect(() => {
     if (!isAuthenticated || role !== "admin") return;
     let cancelled = false;
 
-    // No separate participation fetch: each alert row already carries its own
-    // `responses`, so asking for the 200 most recent answers as well was a
-    // second window onto the same rows that could disagree with the first.
+    // No separate participation fetch: each alert row already carries its own `responses`, so
+    // asking for the 200 most recent answers as well was a second window onto the same rows that
+    // could disagree with the first.
     Promise.all([apiGetAlertHistory({ limit: 200 }), apiGetSavings()])
       .then(([alertRows, savingsSummary]) => {
         if (cancelled) return;
@@ -210,8 +159,8 @@ export default function AdminDashboard() {
     };
   }, [isAuthenticated, role, historyNonce, resetNonce, responsesNonce]);
 
-  // Fetched once, not on the nonces above: this is backend configuration, and
-  // nothing an operator or a household does moves it.
+  // Fetched once, not on the nonces above: this is backend configuration, and nothing an operator
+  // or a household does moves it.
   useEffect(() => {
     if (!isAuthenticated || role !== "admin") return;
     let cancelled = false;
@@ -220,17 +169,16 @@ export default function AdminDashboard() {
         if (!cancelled) setIncentives(model);
       })
       .catch(() => {
-        // The panel degrades to "waiting for the incentive model…" and its
-        // Send button stays disabled, which is the correct failure: without
-        // the served tables there is no setpoint to preview.
+        // The panel degrades to "waiting for the incentive model…" and its Send button stays
+        // disabled, which is the correct failure: without the served tables there is no setpoint to
+        // preview.
       });
     return () => {
       cancelled = true;
     };
   }, [isAuthenticated, role]);
 
-  // Alert arrivals are prepended by the WebSocket hook. Track their composite
-  // identity so the arrival sound fires once per alert, including the first.
+  // Alert arrivals are prepended by the WebSocket hook.
   const latestAlertKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -244,11 +192,8 @@ export default function AdminDashboard() {
     }
   }, [alerts]);
 
-  // ── Merge stored and live ──
-  // Live arrivals first, then anything from the database not already present,
-  // keyed on `id + tick`. Same pattern as the consumer page.
-  // An alert that arrived over this socket is also a row in the database, and must
-  // appear once.
+  // ── Merge stored and live ── Live arrivals first, then anything from the database not already
+  // present, keyed on `id + tick`.
   const liveKeys = new Set(alerts.map(keyOf));
   const storedAsAlerts: DSMAlert[] = stored
     .filter((s) => !liveKeys.has(s.alert_id + s.tick))
@@ -265,27 +210,15 @@ export default function AdminDashboard() {
       threshold: s.threshold,
       reward_idr_per_kwh: s.reward_idr_per_kwh,
       expected_shed_kwh: s.expected_shed_kwh,
-      // Same "must be copied" rule as the consumer page's fromPersisted():
-      // live arrivals carry these, history has to be given them explicitly.
+      // Same "must be copied" rule as the consumer page's fromPersisted(): live arrivals carry
+      // these, history has to be given them explicitly.
       duration_minutes: s.duration_minutes,
       target_reduction_w: s.target_reduction_w,
       auto_push_status: s.auto_pushed ? "sent" : null,
     }));
   const feed: DSMAlert[] = [...alerts, ...storedAsAlerts];
 
-  // ── Per-alert answers ──
-  // The stored row is the authority. `PersistedAlert.responses` is the server's
-  // own list for that alert, complete however old the alert is; the socket only
-  // fills the gap, covering answers that landed since the last hydrate.
-  //
-  // It used to be the other way round — tallies were built by merging this
-  // socket's 100-response cap with a separate 200-row participation window, two
-  // windows that could each run out before the feed did, so on a long run the
-  // oldest alerts on screen quietly under-reported. Same rule as the summary
-  // tiles: a total does not come from an array this page happens to be holding.
-  //
-  // Deduped on (alert, household): one household gets one vote, which is also
-  // what the unique constraint on the table says.
+  // ── Per-alert answers ── The stored row is the authority.
   const responsesByAlertId = new Map<string, DSMResponse[]>();
   const seenResponse = new Set<string>();
 
@@ -313,8 +246,8 @@ export default function AdminDashboard() {
 
   const allResponses: DSMResponse[] = Array.from(responsesByAlertId.values()).flat();
 
-  // No local state to set — every control endpoint broadcasts the new status,
-  // which is what re-renders the buttons here and in any other open tab.
+  // No local state to set — every control endpoint broadcasts the new status, which is what
+  // re-renders the buttons here and in any other open tab.
   const handleStart = useCallback(async () => {
     await apiStart();
   }, []);
@@ -329,8 +262,8 @@ export default function AdminDashboard() {
 
   const handleReset = useCallback(async () => {
     setConfirmReset(false);
-    // The backend broadcasts system_reset, which is what empties the feeds on
-    // this dashboard, every other admin tab, and every consumer phone.
+    // The backend broadcasts system_reset, which is what empties the feeds on this dashboard, every
+    // other admin tab, and every consumer phone.
     await apiReset();
   }, []);
 
@@ -348,8 +281,8 @@ export default function AdminDashboard() {
   const handleToggleAutopush = useCallback(async () => {
     setTogglingAutopush(true);
     try {
-      // No local state to set — the backend broadcasts autopush_status to every
-      // admin client, including this one, which is what flips the switch.
+      // No local state to set — the backend broadcasts autopush_status to every admin client,
+      // including this one, which is what flips the switch.
       await apiSetAutopush(!autopushEnabled);
     } catch (err) {
       console.error("Toggle autopush failed:", err);
@@ -364,9 +297,7 @@ export default function AdminDashboard() {
     }
   }, [isLoading, isAuthenticated, role, router]);
 
-  // Space toggles run/pause — the one action an operator repeats. Guarded so
-  // it can never fire from a focused control (Space already activates buttons
-  // and toggles switches) or from a text field. No destructive key bindings.
+  // Space toggles run/pause — the one action an operator repeats.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.code !== "Space" || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
@@ -391,21 +322,17 @@ export default function AdminDashboard() {
     return null;
   }
 
-  // Nobody-has-acted and the-gateway-dropped-it are different states but the
-  // same *work*, so the feed's default view holds both.
-  //
-  // `failedAlerts` stays derived separately because "Resend all failed" acts
-  // on exactly that set — an unacted alert has never been tried and is not
-  // something to retry.
+  // Nobody-has-acted and the-gateway-dropped-it are different states but the same *work*, so the
+  // feed's default view holds both.
   const failedAlerts = feed.filter((a) => isFailed(outcomeOf(a)));
   const pendingAlerts = feed.filter((a) => {
     const o = outcomeOf(a);
-    return o === null || isFailed(o);
+    // "sending" stays in view: it is a second away from either delivered or failed, and a row
+    // vanishing mid-flight hides which one it became.
+    return o === null || o === "sending" || isFailed(o);
   });
 
-  // What the feed card is showing. "All" is the whole feed in arrival order
-  // rather than only the settled remainder — with one card and a filter,
-  // hiding pending rows from "All" would make the label a lie.
+  // What the feed card is showing.
   const visibleAlerts = (feedView === "pending" ? pendingAlerts : feed).slice(0, 40);
 
   // The page's headline state, and how many parameters are behind it.
@@ -418,29 +345,15 @@ export default function AdminDashboard() {
 
   return (
     <div className="ds-page">
-      {/* The rail carries the section nav, the username, sign-out and the
-          three live badges this page used to hold in its `aside` — so all that
-          is left here is what the page is called. The badges in particular are
-          better off there: the gateway being down is the most consequential
-          thing an operator can miss, and it used to be invisible from the
-          other four screens. */}
       <PageHeader
         title="Control Room"
         subtitle="6-parameter monitoring · Indonesian PLN Grid"
       />
 
-      {/* ── Controls ──
-          One primary button per phase, so no combination of buttons can
-          describe a state the backend isn't in.
-
-          There is no Stop. Stop and Pause were the same action wearing two
-          labels: both halted the tick, both kept `current_tick`, and both
-          continued from where they left off (Start after a stop resumed
-          mid-dataset exactly as Resume does). The only difference was internal
-          — stop cancelled the asyncio task, pause parked it in a 100 ms poll.
-          Two buttons for one outcome is an invitation to guess at a difference
-          that isn't there. Halting is Pause; rewinding is Reset. `/api/stop`
-          still exists and `reset()` still calls `simulator.stop()`. */}
+      {/*
+          ── Controls ── One primary button per phase, so no combination of buttons can describe a
+          state the backend isn't in.
+      */}
       <div className="ds-toolbar">
         {phase === "idle" && (
           <button className="ds-btn ds-btn--primary" onClick={handleStart}>
@@ -483,8 +396,7 @@ export default function AdminDashboard() {
           Reset
         </button>
 
-        {/* The six numbers that decide what this whole system considers a
-            problem. They were reachable only by POSTing to the API. */}
+        {/* The six numbers that decide what this whole system considers a problem. */}
         <button
           className="ds-btn"
           onClick={() => setTuning(true)}
@@ -494,8 +406,10 @@ export default function AdminDashboard() {
           Thresholds
         </button>
 
-        {/* Put a chosen parameter and severity in front of a real phone on
-            demand, rather than waiting for the dataset to produce one. */}
+        {/*
+            Put a chosen parameter and severity in front of a real phone on demand, rather than
+            waiting for the dataset to produce one.
+        */}
         <button
           className="ds-btn"
           onClick={() => setTesting(true)}
@@ -542,8 +456,10 @@ export default function AdminDashboard() {
           </span>
         </button>
 
-        {/* Recovery is one click once the gateway is back, instead of hunting
-            the feed for rows that failed while it was down. */}
+        {/*
+            Recovery is one click once the gateway is back, instead of hunting the feed for rows
+            that failed while it was down.
+        */}
         {failedAlerts.length > 0 && (
           <button
             className="ds-btn ds-btn--sm"
@@ -561,17 +477,7 @@ export default function AdminDashboard() {
 
       </div>
 
-      {/* ── Grid status ──
-          The anchor for the page. Six gauges tell an operator what every
-          parameter is doing; none of them says whether that adds up to a
-          problem, and answering that was previously an act of reading all six
-          and holding the trip points in your head.
-
-          Run state rides here rather than in the control strip above. It was
-          in the same row as the buttons that change it, which reads well until
-          you want to know the state without looking at which button happens to
-          be showing — the phase is a fact about the run, not a property of the
-          toolbar. */}
+      {/* ── Grid status ── The anchor for the page. */}
       <section className={`ds-hero ds-hero--${verdict.level}`}>
         <div className="ds-hero__main">
           <p className="ds-hero__label">Grid status</p>
@@ -619,14 +525,7 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* ── Live grid state ──
-          First, and full width. This is an operator console: what the grid is
-          doing right now is the page, and these six gauges were previously in
-          the right-hand column below five navigation tiles.
-
-          Ordered by PARAMETER_CONFIGS, which is config.PARAMETER_META's
-          priority order — so the console reads in the same sequence the
-          control logic breaks a severity tie. */}
+      {/* ── Live grid state ── First, and full width. */}
       <div className="ds-grid ds-grid--6">
         {PARAMETER_CONFIGS.map((config) => {
           const value = gridState ? (gridState.parameters[config.valueKey] as number) : 0;
@@ -639,10 +538,7 @@ export default function AdminDashboard() {
               key={config.key}
               label={config.label}
               value={gridState ? config.format(value) : "—"}
-              // The *live* trip point, not a hardcoded one. These gauges
-              // highlight from the same evaluation that emits the alerts, so
-              // the label has to follow the same thresholds or it contradicts
-              // the highlight beside it.
+              // The *live* trip point, not a hardcoded one.
               sub={config.thresholdLabel(thresholds)}
               triggered={triggered}
             />
@@ -650,24 +546,10 @@ export default function AdminDashboard() {
         })}
       </div>
 
-      {/* ── Alert feed | charts ──
-          Wider on the left: the feed is the thing with actions on it. The
-          savings card that used to sit under it is gone — "Energy saved" was
-          rendered three times on this page (a tile, that card, and a chart
-          view), all reading one object. The tile links out, the chart plots
-          it, and the by-parameter split it carried now lives on
-          /admin/participation beside the answers it derives from. */}
+      {/* ── Alert feed | charts ── Wider on the left: the feed is the thing with actions on it. */}
       <div className="ds-grid ds-grid--feed">
         <div className="ds-card ds-card--strip ds-card--scroll">
-          {/* One card, not two. "Needs action" and "Everything else" were
-              stacked cards rendering the same row type, which meant the
-              operator read one list as two and the pending card appeared and
-              vanished as work arrived — the page reflowed under them.
-
-              The filter is the same segmented control the charts use. Needs
-              action stays the default, so the blocking work is still what you
-              land on; the difference is that seeing the rest is now one click
-              rather than a scroll past it. */}
+          {/* One card, not two. */}
           <div className="ds-card__head">
             <span className="ds-card__title">Alert feed</span>
             <span className="ds-feedbar">
@@ -703,10 +585,9 @@ export default function AdminDashboard() {
 
           <div className="ds-card__body ds-stack ds-stack--sm">
             {visibleAlerts.length === 0 ? (
-              // "Nothing here" and "history still loading" look identical to
-              // an operator, and the wrong one is actively misleading — it
-              // says nothing has happened when the record simply hasn't
-              // arrived yet.
+              // "Nothing here" and "history still loading" look identical to an operator, and the
+              // wrong one is actively misleading — it says nothing has happened when the record
+              // simply hasn't arrived yet.
               <div className="ds-empty">
                 {!hydrated ? (
                   <>
@@ -747,10 +628,7 @@ export default function AdminDashboard() {
         <GridCharts history={history} savings={savings} thresholds={thresholds} />
       </div>
 
-      {/* Approvals, full width. Scoped to accounts that are actually waiting —
-          the full account manager lives at /admin/accounts, which now carries
-          the same actions, so this panel no longer has to be a second copy of
-          it competing for dashboard space. */}
+      {/* Approvals, full width. */}
       <AccountsPanel accountsNonce={accountsNonce} />
 
       {tuning && (
@@ -766,9 +644,8 @@ export default function AdminDashboard() {
           gridState={gridState}
           incentives={incentives}
           onClose={() => setTesting(false)}
-          // A composed alert rides no tick, and `broadcast_pushed_alert` goes
-          // to consumers only — so without this refetch the operator fires one
-          // and watches the feed do nothing.
+          // A composed alert rides no tick, and `broadcast_pushed_alert` goes to consumers only —
+          // so without this refetch the operator fires one and watches the feed do nothing.
           onSent={bumpHistory}
         />
       )}

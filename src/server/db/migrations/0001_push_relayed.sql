@@ -1,0 +1,1 @@
+ALTER TABLE `alerts` ADD `push_relayed` integer DEFAULT false NOT NULL;

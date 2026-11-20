@@ -1,18 +1,6 @@
 import type { ReactNode } from "react";
 
-/**
- * One measured figure.
- *
- * Replaces three families that differed only in type size: the admin gauge
- * (written inline in admin/page.tsx), the consumer `Stat` (a near-identical
- * copy in consumer/page.tsx) and the savings/cost headline. A gauge and a
- * headline are the same object at two sizes, so they are now one component
- * with a `hero` flag.
- *
- * `triggered` is the gauge case: the parameter is over its live threshold. It
- * shows as a tinted fill, a coloured value and a filled dot — three signals,
- * so the state survives greyscale and colour-vision deficiency alike.
- */
+/** One measured figure. */
 export function Metric({
   label,
   value,

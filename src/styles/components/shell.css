@@ -50,8 +50,7 @@
   min-width: 0;
 }
 
-/* Breadcrumb. Only `/admin/accounts/[id]` is two levels deep; it used to mark
-   itself as the Accounts page in the nav and offer no way up at all. */
+/* Breadcrumb. */
 .ds-crumb {
   display: inline-flex;
   align-items: center;
@@ -93,8 +92,10 @@
 
 .ds-shell__main {
   flex: 1;
-  /* Recharts' ResponsiveContainer ratchets its track wider on every resize
-     without this — the same reason `.ds-grid > *` carries it. */
+  /*
+   * Recharts' ResponsiveContainer ratchets its track wider on every resize without this — the same
+   * reason `.ds-grid > *` carries it.
+   */
   min-width: 0;
 }
 
@@ -109,8 +110,10 @@
   gap: var(--sp-5);
   padding: var(--sp-5) var(--sp-4);
   background: var(--surface);
-  /* A hairline, not `--e1`: the rail runs the full height of the viewport, so
-     a drop shadow along it reads as a seam rather than a lift. */
+  /*
+   * A hairline, not `--e1`: the rail runs the full height of the viewport, so a drop shadow along
+   * it reads as a seam rather than a lift.
+   */
   border-right: 1px solid var(--border);
 }
 
@@ -119,16 +122,6 @@
   align-items: center;
   gap: var(--sp-3);
   padding: var(--sp-1) var(--sp-2);
-}
-
-/* The mark. A violet disc with a lime quadrant — the brand pair, at the size
-   where two colours is all a logo can carry. */
-.ds-sidebar__mark {
-  flex: none;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--r-sm);
-  background: linear-gradient(140deg, var(--accent) 55%, var(--ok-solid) 55%);
 }
 
 .ds-sidebar__wordmark {
@@ -202,8 +195,7 @@
   color: var(--accent);
 }
 
-/* Accounts waiting for approval. A dot rather than a number: the count is
-   already on the row, and this says "act on it" instead of "how many". */
+/* Accounts waiting for approval. */
 .ds-navitem__flag {
   position: absolute;
   top: 9px;
@@ -271,13 +263,7 @@
   font-weight: 500;
 }
 
-/* The narrow-screen bar. Hidden until the rail goes off-canvas.
-
-   `fixed`, not `sticky`: this renders inside `.ds-shell`, which is a flex row,
-   and a sticky element is still in flow — so it laid out as a *column beside*
-   the page instead of a bar above it. Taking it out of flow is what keeps the
-   shell a two-child row at every width. `.ds-shell__main` pays for it with top
-   padding at the same breakpoint. */
+/* The narrow-screen bar. */
 .ds-topbar {
   display: none;
   position: fixed;
@@ -295,6 +281,9 @@
 
 .ds-topbar__brand {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
   font-size: var(--fs-md);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -321,8 +310,7 @@
     align-items: center;
   }
 
-  /* Words go, glyphs stay. Each row keeps a `title` in the markup, so the
-     label is still reachable on hover. */
+  /* Words go, glyphs stay. */
   .ds-sidebar__wordmark,
   .ds-navitem__label,
   .ds-navitem__count,
@@ -358,8 +346,10 @@
     justify-content: center;
   }
 
-  /* Icon-only appearance control stacks rather than sitting in a row — three
-     pills side by side do not fit a 68px rail. */
+  /*
+   * Icon-only appearance control stacks rather than sitting in a row — three pills side by side do
+   * not fit a 68px rail.
+   */
   .ds-segment--icons {
     grid-auto-flow: row;
     grid-auto-columns: auto;
@@ -524,8 +514,7 @@
   color: var(--text-muted);
 }
 
-/* Run state. Right-hand column on a wide screen, its own row below the
-   headline when there is no space for both. */
+/* Run state. */
 .ds-hero__run {
   flex: 0 1 260px;
   display: flex;

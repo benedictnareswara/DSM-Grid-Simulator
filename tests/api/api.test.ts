@@ -1,7 +1,6 @@
 /**
- * The REST API end to end, with the route handlers called directly: accounts,
- * sessions, simulation control and the gateway gate. The realtime path has
- * its own file.
+ * The REST API end to end, with the route handlers called directly: accounts, sessions, simulation
+ * control and the gateway gate.
  */
 
 import { beforeAll, describe, expect, it } from "vitest";

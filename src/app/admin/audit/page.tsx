@@ -32,20 +32,7 @@ const ACTIONS = [
   ["audit.clear", "Log cleared"],
 ];
 
-/**
- * The `detail` blob, as one readable line.
- *
- * `detail` is free-form JSONB so an action can add a field without a migration,
- * which means this cannot assume a shape. Two cases are worth handling
- * specially:
- *
- * - **A `{from, to}` pair** (a threshold retune) becomes a diff of only what
- *   actually moved. Printing both sets in full makes the operator find the one
- *   changed number among twelve.
- * - **Any other nested object** is JSON, not template-interpolated. The naive
- *   `${k}=${v}` this replaced rendered a nested object as the literal string
- *   `[object Object]`, which is the least useful thing a log can say.
- */
+/** The `detail` blob, as one readable line. */
 function describeDetail(detail: Record<string, unknown> | null | undefined): string {
   if (!detail) return "—";
 
@@ -147,8 +134,10 @@ export default function AuditPage() {
           choices={ACTIONS.map(([value, label]) => ({ value, label }))}
           label="Filter by action"
         />
-        {/* Trailing, away from the filters — this is the one control here that
-            changes the record rather than the view of it. */}
+        {/*
+            Trailing, away from the filters — this is the one control here that changes the record
+            rather than the view of it.
+        */}
         <span className="ds-filters__trailing">
           <button
             className="ds-btn ds-btn--sm"
@@ -197,9 +186,8 @@ export default function AuditPage() {
                         {a.actor_label}
                       </Link>
                     ) : (
-                      // No actor means the system acted on its own — autopush,
-                      // or an account's own registration before anyone existed
-                      // to approve it.
+                      // No actor means the system acted on its own — autopush, or an account's own
+                      // registration before anyone existed to approve it.
                       <span className="ds-muted">{a.actor_label}</span>
                     )}
                   </td>

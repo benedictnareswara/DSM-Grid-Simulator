@@ -11,23 +11,7 @@ import {
 import type { User } from "@/lib/types";
 import { Notice } from "@/components/Notice";
 
-/**
- * Account management for the operator.
- *
- * Pending accounts come first because that queue is why this panel gets opened
- * — a household that registered cannot sign in until someone acts here, and a
- * signup lost at the bottom of an alphabetical list is a person locked out.
- *
- * `accountsNonce` is what keeps it live. The backend broadcasts
- * `accounts_changed` to admin sockets on every registration and every account
- * mutation; the hook counts those, and this refetches when the count moves.
- * Before that, this fetched once on mount and never again, so someone who
- * signed up while the dashboard was open stayed invisible.
- *
- * Delete asks for confirmation and suspend does not, on purpose: suspend is
- * reversible with one click (Reinstate), delete cascades the household's whole
- * response history away and is not.
- */
+/** Account management for the operator. */
 export function AccountsPanel({ accountsNonce }: { accountsNonce: number }) {
   const [users, setUsers] = useState<User[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -43,10 +27,9 @@ export function AccountsPanel({ accountsNonce }: { accountsNonce: number }) {
     }
   }, []);
 
-  // Written out rather than reusing refresh(): the React Compiler's
-  // set-state-in-effect rule cannot see that refresh() only calls setState
-  // after an await, so calling it here reads as a synchronous cascade.
-  // Re-runs whenever accountsNonce moves — that is the live update.
+  // Written out rather than reusing refresh(): the React Compiler's set-state-in-effect rule cannot
+  // see that refresh() only calls setState after an await, so calling it here reads as a
+  // synchronous cascade.
   useEffect(() => {
     let cancelled = false;
     apiListUsers()
@@ -67,8 +50,7 @@ export function AccountsPanel({ accountsNonce }: { accountsNonce: number }) {
       setError(null);
       setNotice(null);
       const res = await fn(user.id);
-      // The HTTP status decides, not the shape of the body. Inferring success
-      // from a missing error field meant a 500 looked like a completed delete.
+      // The HTTP status decides, not the shape of the body.
       if (!res.ok) {
         setError(res.message ?? `Could not ${verb} ${user.username} (HTTP ${res.status}).`);
       } else {
@@ -82,16 +64,18 @@ export function AccountsPanel({ accountsNonce }: { accountsNonce: number }) {
 
   const pending = users?.filter((u) => u.status === "pending") ?? [];
 
-  // Nothing waiting and nothing else to show — take the space back rather than
-  // standing an empty card on the dashboard.
+  // Nothing waiting and nothing else to show — take the space back rather than standing an empty
+  // card on the dashboard.
   if (users !== null && pending.length === 0 && !error && !notice) {
     return null;
   }
 
   return (
     <div className="ds-card ds-card--strip">
-      {/* Header strip as the link — the body's Approve, Suspend and Delete
-          rule out making the whole card one target. */}
+      {/*
+          Header strip as the link — the body's Approve, Suspend and Delete rule out making the
+          whole card one target.
+      */}
       <Link href="/admin/accounts" className="ds-card__head">
         <span className="ds-card__title">Waiting for approval</span>
         <span className="ds-card__meta">

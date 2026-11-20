@@ -1,12 +1,7 @@
 import { networkInterfaces } from "node:os";
 import type { NextConfig } from "next";
 
-/**
- * This machine's private IPv4 addresses. Next's dev server refuses dev-asset
- * requests from origins it doesn't recognise, and phones on the LAN open the app
- * at the laptop's IP, so the IPs have to be listed. They're worked out at startup
- * so a DHCP change only needs a restart.
- */
+/** This machine's private IPv4 addresses. */
 function lanAddresses(): string[] {
   return Object.values(networkInterfaces())
     .flat()
@@ -21,16 +16,16 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Icons have no content hash in their names: cache for a week, but keep
-        // an update path open with stale-while-revalidate.
+        // Icons have no content hash in their names: cache for a week, but keep an update path open
+        // with stale-while-revalidate.
         source: "/:icon(icon-192\\.png|icon-512\\.png|icon-maskable-512\\.png)",
         headers: [
           { key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" },
         ],
       },
       {
-        // The service worker is its own update mechanism; a cached copy pins
-        // the app to an old shell.
+        // The service worker is its own update mechanism; a cached copy pins the app to an old
+        // shell.
         source: "/sw.js",
         headers: [{ key: "Cache-Control", value: "no-cache, must-revalidate" }],
       },

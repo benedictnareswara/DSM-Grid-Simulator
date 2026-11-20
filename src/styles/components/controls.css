@@ -12,21 +12,6 @@
   box-shadow: var(--e1);
 }
 
-/* Run state, pushed to the end of the control strip so the controls read as a
-   group and the state reads as a caption on them. */
-.ds-toolbar__status {
-  margin-left: auto;
-}
-
-@media (max-width: 900px) {
-  .ds-toolbar__status {
-    margin-left: 0;
-    width: 100%;
-    padding-top: var(--sp-2);
-    border-top: 1px solid var(--border);
-  }
-}
-
 /* ── Range ──────────────────────────────────────────────────────────── */
 .ds-range-group {
   display: flex;
@@ -80,29 +65,6 @@
 }
 
 /* ── Link chip ──────────────────────────────────────────────────────── */
-.ds-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-1) var(--sp-3);
-  border-radius: var(--r-full);
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  color: var(--text-muted);
-  text-decoration: none;
-  transition: background var(--t-fast), color var(--t-fast);
-}
-
-.ds-link:hover {
-  background: var(--hover-wash);
-  color: var(--text);
-}
-
-.ds-link--active {
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 600;
-}
 
 /* ── Row ────────────────────────────────────────────────────────────── */
 .ds-row {
@@ -136,34 +98,21 @@
   grid-template-columns: repeat(2, 1fr);
 }
 
-.ds-grid--3 {
-  grid-template-columns: repeat(3, 1fr);
-}
-
 /* The six live gauges, one row on a console-width screen. */
 .ds-grid--6 {
   grid-template-columns: repeat(6, 1fr);
   gap: var(--sp-3);
 }
 
-/* Feed beside charts. The feed is wider because it is the half with actions
-   on it; the charts only have to be legible. */
+/* Feed beside charts. */
 .ds-grid--feed {
   grid-template-columns: 1.35fr 1fr;
   align-items: start;
 }
 
-/* Always 2- and 3-up regardless of viewport. These live inside the
-   fixed-width consumer column, so a media query would be measuring the
-   browser window rather than the box they are actually in — which is how a
-   three-tile row ends up rendering as two-then-one on a phone. */
+/* Always 2- and 3-up regardless of viewport. */
 .ds-grid--pair {
   grid-template-columns: repeat(2, 1fr);
-}
-
-.ds-grid--triple {
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-2);
 }
 
 .ds-stack {
@@ -176,22 +125,13 @@
   gap: var(--sp-2);
 }
 
-/* LOAD-BEARING. Grid and flex children default to min-width:auto, which lets
-   a Recharts ResponsiveContainer ratchet its track wider on every resize and
-   never give the width back. Without this the whole page scrolls sideways. */
+/* LOAD-BEARING. */
 .ds-grid > *,
 .ds-stack > * {
   min-width: 0;
 }
 
-/* A stacked child sizes to its content and never gets squeezed.
-
-   `.ds-stack` is a flex column, so its children default to `flex-shrink: 1` —
-   and inside a height-capped parent (`.ds-card--scroll`, max-height 520) forty
-   alert rows shrank to about 3px each. They were still there, still had their
-   text, and still had their severity rail, which is what made it read as a
-   striped panel rather than as broken. The card is the thing that scrolls;
-   the rows are not the thing that gives way. */
+/* A stacked child sizes to its content and never gets squeezed. */
 .ds-stack > * {
   flex-shrink: 0;
 }
@@ -217,33 +157,10 @@
 }
 
 /* ── Readout ────────────────────────────────────────────────────────── */
-.ds-readout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-.ds-readout__item {
-  font-size: var(--fs-2xs);
-  padding: 3px var(--sp-2);
-  background: var(--surface-2);
-  border-radius: var(--r-sm);
-  color: var(--text-muted);
-}
 
 /* ── Statusline ─────────────────────────────────────────────────────── */
-.ds-statusline {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  font-size: var(--fs-xs);
-  color: var(--text-faint);
-}
 
-/* The phase, as a coloured dot beside its word. It used to be a bordered
-   uppercase chip, which gave the least changeable fact in the strip the
-   loudest treatment in it. */
+/* The phase, as a coloured dot beside its word. */
 .ds-statusline__state {
   display: inline-flex;
   align-items: center;
@@ -279,10 +196,6 @@
 }
 .ds-statusline__state--finished::before {
   background: var(--sev-info);
-}
-
-.ds-statusline__sep {
-  color: var(--border-strong);
 }
 
 /* ── Modal ──────────────────────────────────────────────────────────── */
@@ -351,8 +264,10 @@
 }
 
 /* ── Slide-over ─────────────────────────────────────────────────────── */
-/* A panel that arrives from the right edge, for a settings surface that is
-   too big for a modal and too incidental for a page of its own. */
+/*
+ * A panel that arrives from the right edge, for a settings surface that is too big for a modal and
+ * too incidental for a page of its own.
+ */
 .ds-sheet-panel {
   position: fixed;
   inset: 0;
@@ -448,10 +363,7 @@
 }
 
 /* ── Segment ────────────────────────────────────────────────────────── */
-/* The selected pill slides between options rather than blinking on and off.
-   `--n` (option count) and `--i` (selected index) are set inline by the
-   component — the one case where an inline style is unavoidable, same as a
-   progress bar's width. */
+/* The selected pill slides between options rather than blinking on and off. */
 .ds-segment {
   position: relative;
   display: inline-grid;
@@ -512,8 +424,9 @@
   justify-content: center;
 }
 
-/* A count riding inside a segment button — how much work the other half of
-   the filter is hiding. */
+/*
+ * A count riding inside a segment button — how much work the other half of the filter is hiding.
+ */
 .ds-segment__count {
   margin-left: var(--sp-1);
   padding: 0 5px;
@@ -525,9 +438,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The feed card's header controls: the filter, then the way out to the full
-   history. Two separate targets, so the head itself is not the link here —
-   unlike every other `ds-card--strip`. */
+/* The feed card's header controls: the filter, then the way out to the full history. */
 .ds-feedbar {
   display: flex;
   align-items: center;
@@ -632,8 +543,7 @@
   line-height: 1.5;
 }
 
-/* Which parameter put the grid in this state. A verdict says what to do; a
-   household that is being asked to change its behaviour is owed the reason. */
+/* Which parameter put the grid in this state. */
 .ds-verdict__cause {
   margin-top: var(--sp-2);
   font-size: var(--fs-xs);
@@ -682,11 +592,7 @@
   overflow: hidden;
 }
 
-/* Lime, not violet. This bar is the household's *result* — the share of what
-   they were asked for that they actually captured — and the positive token is
-   what says so. Violet is chrome; it would make an achievement look like a
-   loading bar. The hero's run progress overrides this back to the accent,
-   because a simulation tick is chrome. */
+/* Lime, not brand red. */
 .ds-progress__fill {
   height: 100%;
   background: var(--ok-solid);

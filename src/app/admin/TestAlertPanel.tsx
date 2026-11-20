@@ -8,29 +8,7 @@ import { PARAMETER_LABELS, PARAMETERS, SEVERITIES } from "@/lib/constants";
 import { defaultWindowMinutes, idr, kwh, previewSetpoint } from "@/lib/domain";
 import { PARAMETER_CONFIGS, type GridState, type IncentiveModel } from "@/lib/types";
 
-/**
- * Compose an alert by hand and push it down the ordinary path.
- *
- * Built for the DSM throttle work. Until now the only way to put a specific
- * parameter and severity in front of a real phone was to wait for the dataset
- * to produce one — fine for watching the engine, useless for testing what a
- * household sees when an `emergency` lands, or what a load controller will do
- * with a setpoint.
- *
- * Three things worth knowing about what this sends:
- *
- * - **The alert is real.** Same prose, same reward maths, same row, same audit
- *   action; it is delivered through the gateway and households can answer it
- *   and be credited for it. It is not marked as a test anywhere, by design.
- * - **The panel writes nothing.** It picks a kind, a severity and a window;
- *   the backend builds the alert from the live grid exactly as the control
- *   logic would. Prose minted here would be prose that could disagree.
- * - **The watts field is a preview until you touch it.** Left alone, the
- *   request omits it and the setpoint is derived from the same shed model
- *   every real alert uses. Type over it and the shed is derived back from what
- *   you typed — the one case where a composed alert's energy figure departs
- *   from the model, which is why it takes a deliberate edit.
- */
+/** Compose an alert by hand and push it down the ordinary path. */
 export function TestAlertPanel({
   gridState,
   incentives,
@@ -65,9 +43,7 @@ export function TestAlertPanel({
       ? Math.round(((watts * effectiveWindow) / 60_000) * 1000) / 1000
       : preview?.shedKwh ?? null;
 
-  // Whether this parameter is actually over its line right now. The composed
-  // alert quotes the live grid either way — this is the warning that stops
-  // "price surged to Rp 1,215 vs Rp 1,215 normal" reading as a bug.
+  // Whether this parameter is actually over its line right now.
   const config = PARAMETER_CONFIGS.find((c) => c.parameter === parameter);
   const live =
     gridState && config ? Boolean(gridState.parameters[config.triggeredKey]) : null;
@@ -79,8 +55,8 @@ export function TestAlertPanel({
       parameter,
       severity,
       duration_minutes: effectiveWindow,
-      // Only when overridden — an untouched form produces an alert
-      // arithmetically identical to a triggered one.
+      // Only when overridden — an untouched form produces an alert arithmetically identical to a
+      // triggered one.
       ...(watts != null ? { target_reduction_w: watts } : {}),
     });
     setSending(false);
@@ -98,8 +74,8 @@ export function TestAlertPanel({
       role="dialog"
       aria-modal="true"
       aria-label="Send a test alert"
-      // Click-outside closes, scrim only — same guard as ThresholdPanel, so a
-      // drag that ends outside a field is not read as a dismissal.
+      // Click-outside closes, scrim only — same guard as ThresholdPanel, so a drag that ends
+      // outside a field is not read as a dismissal.
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

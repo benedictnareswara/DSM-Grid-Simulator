@@ -1,38 +1,6 @@
 /**
  * DSM — colour scheme preference.
- *
- * Three states, not two: `light`, `dark`, and `system` (follow the OS). The
- * preference is what the operator picked; the *resolved* theme is the one
- * actually painted, and only ever `light` or `dark`.
- *
- * ## Why `data-theme` is always present
- *
- * The obvious CSS shape for an override is a media query plus an attribute
- * selector:
- *
- *     @media (prefers-color-scheme: dark) { :root:not([data-theme=light]) { … } }
- *     :root[data-theme="dark"] { … }
- *
- * That needs the ~70-line dark token block written *twice*, in two places that
- * must never drift — exactly the failure mode the rest of this codebase is
- * organised to avoid. So instead the attribute is never absent: the inline
- * script in `app/layout.tsx` resolves `system` to a concrete value before the
- * first paint, and globals.css carries one light block and one dark block with
- * no media query at all.
- *
- * The cost is that theming requires JavaScript. That is already true of every
- * page here — they are all `"use client"` and driven by a WebSocket — so it
- * buys the single dark block for nothing that was working anyway.
- *
- * ## Why this owns the theme-color meta
- *
- * `viewport.themeColor` in a layout can only express a *media* array, so it
- * cannot answer a manual override — pick dark on a light OS and the browser
- * chrome stays light. Both layouts therefore declare no themeColor and this
- * module writes the single meta tag instead, seeded by the same inline script
- * so there is no window where it disagrees with the page.
- *
- * Keep `THEME_COLOR` in step with `--canvas` in globals.css.
+ * @media (prefers-color-scheme: dark) { :root:not([data-theme=light]) { … } }
  */
 
 export type ThemePreference = "light" | "dark" | "system";
@@ -45,16 +13,15 @@ const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 /** Must match `--canvas` for each scheme. */
 const THEME_COLOR: Record<ResolvedTheme, string> = {
-  light: "#f7f7fa",
-  dark: "#0b0b10",
+  light: "#f6f6f7",
+  dark: "#0e0e0f",
 };
 
 const listeners = new Set<() => void>();
 
 /*
- * `useSyncExternalStore` compares snapshots by identity and will loop forever
- * if getSnapshot builds a new object each call. So the snapshot is cached and
- * only rebuilt when something actually changes.
+ * `useSyncExternalStore` compares snapshots by identity and will loop forever if getSnapshot builds
+ * a new object each call.
  */
 interface ThemeSnapshot {
   preference: ThemePreference;
@@ -111,10 +78,7 @@ function commit(next: ThemeSnapshot) {
 
 let initialised = false;
 
-/**
- * Sync module state to the DOM the inline script already set up, and start
- * following the OS. Idempotent, and safe to call from several components.
- */
+/** Sync module state to the DOM the inline script already set up, and start following the OS. */
 function init() {
   if (initialised || typeof window === "undefined") return;
   initialised = true;
@@ -123,9 +87,7 @@ function init() {
   snapshot = { preference, resolved: resolve(preference) };
   paint(snapshot.resolved);
 
-  // One listener for the life of the page. It fires on every OS change but
-  // only moves anything while the preference is `system` — cheaper and less
-  // error-prone than attaching and detaching as the preference changes.
+  // One listener for the life of the page.
   window.matchMedia(DARK_QUERY).addEventListener("change", () => {
     if (snapshot.preference !== "system") return;
     commit({ preference: "system", resolved: systemTheme() });
@@ -147,12 +109,7 @@ export function getSnapshot(): ThemeSnapshot {
   return snapshot;
 }
 
-/**
- * `useSyncExternalStore` server snapshot.
- *
- * A fixed value: the OS scheme is unknowable during SSR, and the blocking
- * script in app/layout.tsx sets `data-theme` before first paint anyway.
- */
+/** `useSyncExternalStore` server snapshot. */
 export function getServerSnapshot(): ThemeSnapshot {
   return SERVER_SNAPSHOT;
 }

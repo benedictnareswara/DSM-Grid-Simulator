@@ -3,23 +3,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import type { DSMAlert } from "@/lib/types";
 
-/**
- * OS-level notifications for DSM alerts that have already arrived.
- *
- * This is a *rendering* layer, not a delivery channel. `notify()` is called
- * from the consumer page's existing `pushed_alert` handler, which means the
- * alert has already completed the full admin -> backend -> ESP32 -> backend
- * -> consumer round trip. Nothing here can put an alert on screen that the
- * hardware broker did not forward, so the fail-closed guarantee in
- * docs/ARCHITECTURE.md, "The gateway gate" is untouched.
- *
- * Consequences of that design, both intentional:
- *   - No VAPID keys, no push subscription, no backend involvement.
- *   - Notifications only fire while the page is alive (foreground, or an
- *     installed PWA that the OS has not yet evicted). An alert that arrives
- *     while the app is fully closed is not delivered at all — the WebSocket
- *     is gone, so there is nothing to notify about.
- */
+/** OS-level notifications for DSM alerts that have already arrived. */
 
 export type NotificationSupport =
   | "ready" // secure context, API present
@@ -38,11 +22,8 @@ interface UseAlertNotificationsReturn {
 let swRegistration: ServiceWorkerRegistration | null = null;
 
 /*
- * Both values below are facts about the browser, not React state, so they are
- * read through useSyncExternalStore rather than copied into state by an
- * effect. That keeps the server render ("unsupported" / "default") consistent
- * with the client and avoids the cascading re-render that setState-in-effect
- * would cause.
+ * Both values below are facts about the browser, not React state, so they are read through
+ * useSyncExternalStore rather than copied into state by an effect.
  */
 
 /** Support never changes for the life of the page — nothing to subscribe to. */
@@ -50,9 +31,8 @@ const subscribeNever = () => () => {};
 
 function getSupport(): NotificationSupport {
   if (typeof window === "undefined" || !("Notification" in window)) return "unsupported";
-  // A page served over plain http:// from anything other than localhost is not
-  // a secure context, and browsers hide the Notification and service worker
-  // APIs there. This is what a phone hits at http://192.168.x.x:3000.
+  // A page served over plain http:// from anything other than localhost is not a secure context,
+  // and browsers hide the Notification and service worker APIs there.
   if (!window.isSecureContext) return "insecure";
   return "ready";
 }
@@ -75,14 +55,7 @@ function getPermission(): NotificationPermission {
 const getPermissionOnServer = (): NotificationPermission => "default";
 const getSupportOnServer = (): NotificationSupport => "unsupported";
 
-/**
- * OS notifications for arriving alerts, plus the service worker registration.
- *
- * Everything here needs a secure context, so it degrades rather than throws
- * over plain HTTP from a LAN address — see the banner in the consumer page.
- * Notifications are raised locally on receipt of a `pushed_alert`; there is
- * no remote push, and deliberately so (docs/ARCHITECTURE.md, "The gateway gate").
- */
+/** OS notifications for arriving alerts, plus the service worker registration. */
 export function useAlertNotifications(): UseAlertNotificationsReturn {
   const support = useSyncExternalStore(subscribeNever, getSupport, getSupportOnServer);
   const permission = useSyncExternalStore(
@@ -95,8 +68,7 @@ export function useAlertNotifications(): UseAlertNotificationsReturn {
     if (getSupport() !== "ready" || !("serviceWorker" in navigator)) return;
 
     // Android Chrome refuses `new Notification()` outright and only allows
-    // registration.showNotification(), so this is not optional there. Failure
-    // is non-fatal: notify() falls back to the constructor.
+    // registration.showNotification(), so this is not optional there.
     navigator.serviceWorker
       .register("/sw.js", { scope: "/", updateViaCache: "none" })
       .then((reg) => {
@@ -141,8 +113,8 @@ export function useAlertNotifications(): UseAlertNotificationsReturn {
           new Notification(title, options);
         }
       } catch (err) {
-        // Android Chrome throws TypeError on the bare constructor when no
-        // service worker is available. The in-app sound still fires.
+        // Android Chrome throws TypeError on the bare constructor when no service worker is
+        // available.
         console.warn("[Notify] could not show notification:", err);
       }
     },

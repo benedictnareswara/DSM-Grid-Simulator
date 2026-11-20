@@ -1,14 +1,4 @@
-/**
- * Filter vocabularies shared by the admin tables.
- *
- * `SEVERITIES` and `PARAMETERS` were declared identically at the top of both
- * alerts/page.tsx and participation/page.tsx. They are the backend's own
- * vocabularies — `severity` from the server constants and `parameter` from
- * PARAMETER_META — so a page-local copy is a copy of a wire contract.
- *
- * NOTE the parameter values are the backend's `parameter` keys
- * ("reserve_margin"), not PARAMETER_CONFIGS' display key ("reserve").
- */
+/** Filter vocabularies shared by the admin tables. */
 
 /** Leading "" is the "any" option. */
 export const SEVERITIES = ["", "info", "warning", "critical", "emergency"] as const;
@@ -25,12 +15,16 @@ export const PARAMETERS = [
 ] as const;
 
 /**
- * Values match the predicates in src/app/api/alerts/route.ts — the same four
- * states `Alert.outcome` derives, expressed as a filter.
+ * How long a pushed alert may wait for the gateway's `forward_alert` echo before it counts as not
+ * delivered.
  */
+export const DELIVERY_GRACE_MS = 10_000;
+
+/** Values match the outcome predicates in src/app/api/alerts/route.ts. */
 export const OUTCOMES: { value: string; label: string }[] = [
   { value: "", label: "Any outcome" },
   { value: "pending", label: "Pending" },
+  { value: "sending", label: "Sending" },
   { value: "delivered", label: "Delivered" },
   { value: "failed", label: "Not delivered" },
   { value: "ignored", label: "Ignored" },

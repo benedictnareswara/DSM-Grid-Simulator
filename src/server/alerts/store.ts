@@ -1,16 +1,4 @@
-/**
- * Writing alerts and responses. The life of an alert row:
- *
- *   trigger          recordTrigger()   the moment the control logic emits it
- *   push             markPushed()      stamps pushed_at, bumps push_attempts (Resend = retry, not a new alert)
- *   forward_alert    markDelivered()   the gateway's echo is the only proof of delivery
- *   forward_response recordResponse()  written when the gateway echoes the answer,
- *                                      not at the REST call; with the gateway down
- *                                      that tap reached nobody
- *
- * Every function swallows its own errors. Losing an audit row is bad; refusing
- * to relay an emergency alert because the database hiccuped is worse.
- */
+/** Writing alerts and responses. */
 
 import { and, desc, eq, isNotNull, isNull, lt } from "drizzle-orm";
 import type { DSMAlert } from "@/lib/types";
@@ -22,10 +10,7 @@ const STREAK_LOOKBACK = 50;
 
 type AlertLike = Partial<DSMAlert> & { id?: string };
 
-/**
- * Parse a timestamp that came back through the gateway. A naive string is
- * treated as UTC; everything the server itself sends is zone-aware.
- */
+/** Parse a timestamp that came back through the gateway. */
 function parseIso(value: string | null | undefined): Date {
   if (!value) return new Date();
   const hasZone = /(Z|[+-]\d{2}:?\d{2})$/.test(value);
@@ -68,15 +53,28 @@ export function recordTrigger(db: DB, alert: AlertLike): void {
   }
 }
 
-/** Record a push attempt, creating the row first if it's somehow missing. Never touches delivered_at. */
-export function markPushed(db: DB, alert: AlertLike, pushedBy: string | null, autoPushed: boolean): void {
+/** Record a push attempt, creating the row first if it's somehow missing. */
+export function markPushed(
+  db: DB,
+  alert: AlertLike,
+  pushedBy: string | null,
+  autoPushed: boolean,
+  relayed: boolean,
+): void {
   const alertId = String(alert.id ?? "");
   if (!alertId) return;
   try {
     const row = load(db, alertId, alert.tick);
     if (!row) {
       db.insert(alerts)
-        .values({ ...alertColumns(alert), pushedAt: new Date(), pushedBy, autoPushed, pushAttempts: 1 })
+        .values({
+          ...alertColumns(alert),
+          pushedAt: new Date(),
+          pushedBy,
+          autoPushed,
+          pushAttempts: 1,
+          pushRelayed: relayed,
+        })
         .onConflictDoNothing()
         .run();
       return;
@@ -86,6 +84,7 @@ export function markPushed(db: DB, alert: AlertLike, pushedBy: string | null, au
         pushedAt: new Date(),
         pushedBy,
         autoPushed,
+        pushRelayed: relayed,
         pushAttempts: (row.pushAttempts ?? 0) + 1,
         // A Resend un-ignores: a row that is both ignored and pushed reads as neither.
         ignoredAt: null,
@@ -128,11 +127,7 @@ export function markIgnored(db: DB, alertId: string, tick: number | null, ignore
   }
 }
 
-/**
- * Consecutive accepts this household had going into `when`, stopping at the
- * first decline. Only counts answers before `when`, so re-answering an old
- * alert can't borrow a streak from later ones.
- */
+/** Consecutive accepts this household had going into `when`, stopping at the first decline. */
 function streakBefore(db: Conn, userId: string, when: Date): number {
   const rows = db
     .select({ accepted: alertResponses.accepted })
@@ -149,10 +144,7 @@ function streakBefore(db: Conn, userId: string, when: Date): number {
   return streak;
 }
 
-/**
- * Upsert this household's answer (one vote per household) and snapshot its
- * streak. Only alerts that were actually delivered can be answered.
- */
+/** Upsert this household's answer (one vote per household) and snapshot its streak. */
 export function recordResponse(
   db: DB,
   alertId: string,

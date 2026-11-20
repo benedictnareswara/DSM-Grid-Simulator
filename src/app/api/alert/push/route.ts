@@ -19,18 +19,13 @@ const Body = z
   })
   .loose();
 
-/**
- * The operator pushes an alert through the gateway. This stamps pushed_at and
- * bumps push_attempts (a Resend is a retry). Only the gateway's echo marks it
- * delivered, so a push into a dead gateway leaves an "attempted, never
- * delivered" row, which is the state the operator most needs a record of.
- */
+/** The operator pushes an alert through the gateway. */
 export const POST = route(async (req, { rt }) => {
   const admin = await requireAdmin(req, rt);
   const alert = (await readBody(req, Body)) as DSMAlert;
   const connected = rt.hub.gatewayConnected;
 
-  markPushed(rt.db, alert, admin.id, false);
+  markPushed(rt.db, alert, admin.id, false, connected);
   recordAudit(rt.db, AUDIT.ALERT_PUSH, {
     actor: admin,
     targetType: "alert",

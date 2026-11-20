@@ -5,12 +5,7 @@ import { clientIp, json, qBool, readQuery, requireConsumer, route } from "@/serv
 
 const Query = z.object({ accepted: qBool });
 
-/**
- * A household accepts or declines, routed through the gateway. Who answered
- * comes from the access token, never the request, so nobody can answer for
- * another household. Nothing is recorded here: the response row is written
- * when the gateway echoes it back. With no gateway, this tap reaches nobody.
- */
+/** A household accepts or declines, routed through the gateway. */
 export const POST = route<{ params: Promise<{ id: string }> }>(async (req, { rt, params }) => {
   const user = await requireConsumer(req, rt);
   const { id } = await params;

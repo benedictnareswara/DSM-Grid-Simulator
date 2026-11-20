@@ -1,14 +1,6 @@
 import type { ReactNode } from "react";
 
-/**
- * The filter row above every admin table.
- *
- * Four pages built this by hand — alerts, participation, audit and accounts —
- * and each re-derived the same two rules: a select resets the pager to page
- * one, and Clear only appears when something is actually filtered. Getting
- * either wrong is silent (you page through a stale offset, or you cannot tell
- * a filtered table from an empty one), which is why it is one component now.
- */
+/** The filter row above every admin table. */
 
 export type FilterOption = {
   value: string;
@@ -49,12 +41,7 @@ export function FilterSelect({
   );
 }
 
-/**
- * A row of filters with a Clear control.
- *
- * Exists because this markup had been hand-copied four times; reach for it
- * rather than writing another filter row.
- */
+/** A row of filters with a Clear control. */
 export function FilterBar({
   children,
   active,

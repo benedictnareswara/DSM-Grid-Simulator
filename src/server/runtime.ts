@@ -1,10 +1,4 @@
-/**
- * The process-wide singletons: database, hub, simulator and login throttle.
- *
- * server.ts creates them once and parks them on `globalThis`. Route handlers are
- * bundled by Next separately from server.ts, so importing a module-level
- * singleton there would get a second, empty copy. They call getRuntime() instead.
- */
+/** The process-wide singletons: database, hub, simulator and login throttle. */
 
 import type { DB } from "./db/client";
 import type { Simulator } from "./grid/simulator";

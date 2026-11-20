@@ -20,19 +20,7 @@ import { FilterBar, FilterSelect, options } from "@/components/FilterBar";
 const STATUSES: (UserStatus | "")[] = ["", "pending", "active", "suspended"];
 const LIMIT = 50;
 
-/**
- * Every account, and the actions on them.
- *
- * This page used to be read-only, with a banner telling the operator to go
- * back to the dashboard to actually do anything — so the list and the actions
- * on that list lived on two different screens. It was also the only table in
- * the section without a pager.
- *
- * Delete is deliberately *not* here: it cascades a household's whole response
- * history away and is not reversible, so it stays on the account's own page
- * where there is room to say so. Approve, Suspend and Reinstate are all one
- * click to undo.
- */
+/** Every account, and the actions on them. */
 export default function AccountsPage() {
   const { user: me } = useAuth();
   const [users, setUsers] = useState<User[] | null>(null);
@@ -194,9 +182,9 @@ export default function AccountsPage() {
                       ) : (
                         <button
                           className="ds-btn ds-btn--sm"
-                          // Disabled rather than hidden: the backend refuses it
-                          // anyway, and a button that vanishes is more confusing
-                          // than one that is visibly unavailable.
+                          // Disabled rather than hidden: the backend refuses it anyway, and a
+                          // button that vanishes is more confusing than one that is visibly
+                          // unavailable.
                           disabled={busyId === u.id || u.id === me?.id}
                           title={
                             u.id === me?.id ? "You cannot suspend your own account" : undefined

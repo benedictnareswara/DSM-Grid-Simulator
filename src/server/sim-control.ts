@@ -5,9 +5,8 @@ import { clientIp, json } from "./http";
 import type { Runtime } from "./runtime";
 
 /**
- * Respond to a run-control action and push the new status to every open
- * dashboard, so a second admin tab doesn't keep showing stale buttons. It's
- * also the one place run-state changes are audited.
+ * Respond to a run-control action and push the new status to every open dashboard, so a second
+ * admin tab doesn't keep showing stale buttons.
  */
 export function statusResponse(
   rt: Runtime,

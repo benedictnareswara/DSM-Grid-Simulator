@@ -1,7 +1,4 @@
-/**
- * Wire types shared by the server, the pages and the tests. They describe what
- * crosses the REST and WebSocket boundary.
- */
+/** Wire types shared by the server, the pages and the tests. */
 
 export type Severity = "info" | "warning" | "critical" | "emergency";
 export type Parameter =
@@ -11,7 +8,6 @@ export type Parameter =
   | "peak_load"
   | "renewable"
   | "price";
-
 
 export interface GridParameters {
   // P1: Peak Load Forecast
@@ -42,25 +38,14 @@ export interface GridParameters {
   emergency_triggered: boolean;
 
   // P6: Electricity Price
-  /**
-   * Time-of-use *wholesale* base for this hour. Normal retail is this × 1.35,
-   * which is what "spiking" is measured against — the P6 gate is the only
-   * relative one, and a fixed rupiah comparison is what made the old price
-   * reward wrong at every hour but one.
-   */
+  /** Time-of-use *wholesale* base for this hour. */
   tou_base_price_idr: number;
   wholesale_price_idr: number;
   retail_price_idr: number;
   price_spike_triggered: boolean;
 }
 
-/**
- * The six live thresholds, from `GET /api/thresholds`.
- *
- * These genuinely steer the engine now. Until recently the control logic
- * branched on the dataset's baked-in `*_triggered` columns and these values
- * were only printed beside an alert, so moving one changed nothing.
- */
+/** The six live thresholds, from `GET /api/thresholds`. */
 export interface Thresholds {
   peak_load_ratio: number;
   freq_deviation_hz: number;
@@ -101,34 +86,15 @@ export interface DSMAlert {
   threshold: number;
   /** Machine-readable form of the credit rate quoted in `incentive`. */
   reward_idr_per_kwh?: number | null;
-  /**
-   * kWh this alert asks the household to drop, from `src/server/grid/incentives.ts`.
-   *
-   * Computed backend-side and carried on the alert. **Do not re-model it in a
-   * client.** It used to be a flat `ASSUMED_REDUCTION_KWH = 1` declared
-   * separately in both web pages, the audit routes — four
-   * constants with nothing keeping them equal, which paid an emergency
-   * contingency and a "shift your laundry" nudge identically.
-   */
+  /** kWh this alert asks the household to drop, from `src/server/grid/incentives.ts`. */
   expected_shed_kwh?: number;
   /**
-   * The same ask as a controller setpoint: hold `target_reduction_w` watts for
-   * `duration_minutes`, then restore. Derived backend-side from
-   * `expected_shed_kwh` (`throttleSetpoint`) — **not a second
-   * model of it**, and not something a client may recompute; both figures are
-   * stamped together and a client that re-derives one will drift the moment
-   * the window table changes.
-   *
-   * Absent on alerts written before the throttle model existed, which is why
-   * `throttleLine()` in `domain.ts` returns null rather than guessing.
+   * The same ask as a controller setpoint: hold `target_reduction_w` watts for `duration_minutes`,
+   * then restore.
    */
   duration_minutes?: number | null;
   target_reduction_w?: number | null;
-  /**
-   * Set by backend autopush. Absent/null on normal manual-approval alerts.
-   * "esp32_offline" means autopush fired with no gateway attached, so the
-   * alert was dropped — fail-closed, same as a manual push would be.
-   */
+  /** Set by backend autopush. */
   auto_push_status?: "sent" | "esp32_offline" | null;
 }
 
@@ -136,16 +102,7 @@ export interface DSMResponse {
   alert_id: string;
   accepted: boolean;
   responded_at: string;
-  /**
-   * Which household answered. Carried end-to-end through the ESP32 — the
-   * backend fills it from the consumer's access token, the gateway copies it
-   * into `forward_response`, and the admin renders what the gateway sent.
-   *
-   * Responses used to be anonymous, so the admin tally counted answers rather
-   * than households and could not tell three phones answering once from one
-   * phone answering three times. Empty string only for a response relayed by
-   * firmware predating that change.
-   */
+  /** Which household answered. */
   user_id: string;
   username: string;
 }
@@ -156,13 +113,7 @@ export type UserRole = "admin" | "consumer";
 /** `pending` accounts exist but cannot sign in until an operator approves. */
 export type UserStatus = "pending" | "active" | "suspended";
 
-/**
- * An account as the API exposes it.
- *
- * There is no password field and there never will be one — only a bcrypt hash
- * is stored, which is one-way. Resetting a password is an action, not a value
- * you can read back.
- */
+/** An account as the API exposes it. */
 export interface User {
   id: string;
   username: string;
@@ -197,28 +148,15 @@ export interface ResponseSummary {
   responded_at: string;
 }
 
-/**
- * What has happened to an alert. Derived on the backend from the timestamp
- * columns (`alertOutcome`) so the dashboard cannot hold a second, disagreeing
- * copy — the bug the admin page already fixed once by collapsing three parallel
- * Sets into one map.
- */
+/** What has happened to an alert. */
 export type AlertOutcome =
+  | "sending" // pushed to the gateway, its delivery echo not back yet (see DELIVERY_GRACE_MS)
   | "pushed"
   | "auto-pushed"
   | "failed-gateway"
   | "ignored";
 
-/**
- * A persisted alert, from `GET /api/alerts` (admin) or `/api/alerts/mine`
- * (consumer). One row per *triggered* alert, not per push attempt.
- *
- * Read the timestamps as a lifecycle: `triggered_at` is always set;
- * `pushed_at` is null until an operator acts; `delivered_at` is null until the
- * ESP32 echoes it back. The consumer endpoint only ever returns alerts with a
- * `delivered_at`, which is what stops history becoming a second delivery path
- * around the gateway.
- */
+/** A persisted alert, from `GET /api/alerts` (admin) or `/api/alerts/mine` (consumer). */
 export interface PersistedAlert {
   id: string;
   alert_id: string;
@@ -250,15 +188,7 @@ export interface PersistedAlert {
   my_response?: boolean | null;
 }
 
-/**
- * One household's answer, flattened for the admin participation log.
- *
- * The `alert_*` fields and the timestamp block below carry the answered alert's
- * own lifecycle, so a row states who was asked what, who asked, and how long
- * the reply took. Reading `responded_at` alone only ever said that somebody
- * tapped something; the rest had to be cross-referenced by hand against the
- * alert history page.
- */
+/** One household's answer, flattened for the admin participation log. */
 export interface ParticipationEntry {
   id: string;
   alert_id: string;
@@ -284,11 +214,8 @@ export interface ParticipationEntry {
 
   /**
    * What this answer earned, and why — all derived server-side from
-   * `src/server/grid/incentives.ts`, so the participation log, the account profile and
-   * both consumer clients quote one arithmetic rather than three.
-   *
-   * A declined answer reports multipliers of 1.0 and zero credit, not what it
-   * "would have" been worth.
+   * `src/server/grid/incentives.ts`, so the participation log, the account profile and both
+   * consumer clients quote one arithmetic rather than three.
    */
   expected_shed_kwh?: number;
   /** Gateway delivery → answer. Null when there is no delivery stamp to measure from. */
@@ -321,35 +248,19 @@ export interface SavingsPoint {
 }
 
 /**
- * What accepting alerts is estimated to have saved — `GET /api/savings`
- * (whole programme) or `/api/savings/mine` (one household). One shape and one
- * backend builder, so the operator's card and the household's tab cannot
- * report differently-computed versions of the same number.
- *
- * Modelled, not metered: the simulator replays a fixed recording, so a
- * household's answer cannot move the meter. Say so wherever this is rendered.
+ * What accepting alerts is estimated to have saved — `GET /api/savings` (whole programme) or
+ * `/api/savings/mine` (one household).
  */
 export interface SavingsSummary {
   /**
-   * What this household was *asked* for, in kWh: every alert the gateway
-   * delivered to them, answered or not. The denominator of "you shifted X of
-   * the Y kWh you were asked for", which replaced a hardcoded Rp 50,000 goal
-   * that was not per-period, not chosen, and pinned at 100% once crossed.
-   *
-   * kWh rather than rupiah on purpose: credit carries speed and streak
-   * multipliers, so a rupiah ratio could exceed 100%.
-   *
-   * `0` on the operator's `/api/savings` — programme-wide the denominator would
-   * be alerts × households, a different quantity — so the admin renders no bar.
+   * What this household was *asked* for, in kWh: every alert the gateway delivered to them,
+   * answered or not.
    */
   offered_kwh: number;
   offered_alerts: number;
   /**
-   * The run of consecutive accepts this household is on, and what it currently
-   * multiplies credit by. Server-derived from the stored `streak_at_response`
-   * snapshots — a client counting leading accepts in its own feed would be a
-   * second model of the streak that could disagree with what was actually paid.
-   * `0` / `1` on the operator's `/api/savings`.
+   * The run of consecutive accepts this household is on, and what it currently multiplies credit
+   * by.
    */
   current_streak: number;
   streak_multiplier: number;
@@ -363,22 +274,11 @@ export interface SavingsSummary {
   series: SavingsPoint[];
 }
 
-/**
- * The incentive model itself, from `GET /api/incentives`.
- *
- * Served rather than restated here: the consumer app has to preview what
- * accepting is worth *before* there is a response to ask the server about, and
- * the previous answer to that was a hardcoded constant per client.
- */
+/** The incentive model itself, from `GET /api/incentives`. */
 export interface IncentiveModel {
   shed_kwh_by_parameter: Record<string, number>;
   shed_multiplier_by_severity: Record<string, number>;
-  /**
-   * How long the ask is spread over, per severity. With the two above this is
-   * everything a client needs to *preview* the setpoint an alert would carry,
-   * without restating the backend's tables — see `previewSetpoint` in
-   * `domain.ts`.
-   */
+  /** How long the ask is spread over, per severity. */
   throttle_window_minutes_by_severity: Record<string, number>;
   response_bonus_tiers: { max_seconds: number; multiplier: number; label: string }[];
   streak_step: number;
@@ -393,10 +293,7 @@ export interface AuditEntry {
   action: string;
   target_type?: string | null;
   target_id?: string | null;
-  /**
-   * Snapshot of the target's name at the time of the action. Denormalised so a
-   * deleted account is still named here after its row (and the FK) is gone.
-   */
+  /** Snapshot of the target's name at the time of the action. */
   target_label?: string | null;
   detail?: Record<string, unknown> | null;
   ip?: string | null;
@@ -410,10 +307,7 @@ export interface UserProfile {
   declined_count: number;
   estimated_credit_idr: number;
   total_kwh?: number;
-  /**
-   * 0–100, from accept rate and median reply speed. Operator-facing only: a
-   * score the household can see becomes a thing to game rather than measure.
-   */
+  /** 0–100, from accept rate and median reply speed. */
   reliability_score?: number;
   accept_rate?: number;
   median_latency_seconds?: number | null;
@@ -433,15 +327,12 @@ export interface AlertLogEntry {
   alert: DSMAlert;
   action: "accepted" | "declined" | "pending";
   actionAt?: string;
+  /** Whether this household's answer has made it through the gateway. */
+  delivery?: "sending" | "failed";
+  failedAction?: "accepted" | "declined";
 }
 
-/**
- * The one value the controls switch on. `running` + `paused` are two booleans
- * describing a single thing, and `finished` is not expressible in them at all
- * (the loop ends with running=false and the tick at the end of the dataset).
- * Derived on the backend in `Simulator.phase`; the booleans remain in the
- * payload for compatibility but the UI should read `phase`.
- */
+/** The one value the controls switch on. */
 export type SimulationPhase = "idle" | "running" | "paused" | "finished";
 
 export interface SimulationStatus {
@@ -465,12 +356,12 @@ export interface TickMessage {
     | "autopush_status"
     | "client_count"
     | "accounts_changed"
+    | "alert_delivered"
     /** Admin only: the live trip points, on connect and on every retune. */
     | "thresholds"
     /**
-     * Consumer only: this household's own answer, echoed back through the
-     * gateway so their other devices agree about what has been answered.
-     * Carries no alert content.
+     * Consumer only: this household's own answer, echoed back through the gateway so their other
+     * devices agree about what has been answered.
      */
     | "my_response"
     | "system_reset";
@@ -489,29 +380,13 @@ export interface TickMessage {
   enabled?: boolean;
   /** client_count: number of consumer sockets currently attached. */
   consumers?: number;
-  /**
-   * client_count: number of distinct households behind those sockets. Lower
-   * than `consumers` when one person has the app open more than once.
-   */
+  /** client_count: number of distinct households behind those sockets. */
   households?: number;
 }
 
-/** Severity ordering, used to pick the loudest severity in a group. */
-export const SEVERITY_RANK: Record<DSMAlert["severity"], number> = {
-  info: 0,
-  warning: 1,
-  critical: 2,
-  emergency: 3,
-};
-
 /**
- * Plain-language statement of what a consumer is actually agreeing to do,
- * keyed by `DSMAlert.parameter`. The alert's own `incentive` text explains the
- * reward; this covers the commitment, which the buttons alone never stated.
- *
- * NOTE: these keys are the backend's `parameter` values from
- * the control logic — "reserve_margin", not PARAMETER_CONFIGS'
- * display key "reserve".
+ * Plain-language statement of what a consumer is actually agreeing to do, keyed by
+ * `DSMAlert.parameter`.
  */
 export const PARAMETER_ASKS: Record<string, string> = {
   peak_load:
@@ -537,13 +412,8 @@ export interface ParameterConfig {
   /** Display key. Differs from `parameter` for exactly one gauge — see below. */
   key: string;
   /**
-   * The backend's own `parameter` value (`PARAMETER_META` key), as it
-   * appears on `DSMAlert.parameter` and in `lib/constants.ts` PARAMETERS.
-   *
-   * Carried here so the correspondence between a gauge and the alerts it
-   * explains lives in this table rather than in a per-page lookup. It is only
-   * `key` again five times out of six: the reserve gauge is `"reserve"` for
-   * display and `"reserve_margin"` on the wire.
+   * The backend's own `parameter` value (`PARAMETER_META` key), as it appears on
+   * `DSMAlert.parameter` and in `lib/constants.ts` PARAMETERS.
    */
   parameter: string;
   label: string;
@@ -551,27 +421,10 @@ export interface ParameterConfig {
   valueKey: keyof GridParameters;
   triggeredKey: keyof GridParameters;
   format: (v: number) => string;
-  /**
-   * Where this gauge's line currently sits.
-   *
-   * A function of the *live* thresholds, not a fixed string. These labels used
-   * to be hardcoded ("> 1.5×", "< 10%") back when the engine could not be
-   * retuned anyway. Now that `POST /api/thresholds` genuinely moves the gate, a
-   * literal here would be a claim the engine no longer honours — the gauge
-   * would say "> 1.5×" while alerting at 3.0.
-   *
-   * `null` renders the fallback: the thresholds have not loaded yet.
-   */
+  /** Where this gauge's line currently sits. */
   thresholdLabel: (t: Thresholds | null) => string;
   /**
-   * Which trip point this gauge is measured against, and the range an operator
-   * may drag it over.
-   *
-   * The bounds are editorial, not enforced by the backend — `POST /api/thresholds`
-   * takes any float. They exist so the tuning panel offers a range that is
-   * *useful* rather than one that is merely legal: a peak-load ratio of 40× can
-   * be posted and would simply mean the gate never fires again, which is a way
-   * to silence the engine by accident rather than a setting anyone wants.
+   * Which trip point this gauge is measured against, and the range an operator may drag it over.
    */
   tuning: {
     key: keyof Thresholds;
@@ -580,8 +433,10 @@ export interface ParameterConfig {
     step: number;
     /** The threshold value on its own, for the slider's readout. */
     format: (v: number) => string;
-    /** Which direction trips the gate — the panel says so, because "10%" on
-     *  its own does not tell you whether higher or lower is the problem. */
+    /**
+     * Which direction trips the gate — the panel says so, because "10%" on its own does not tell
+     * you whether higher or lower is the problem.
+     */
     direction: "above" | "below";
   };
 }
@@ -598,18 +453,7 @@ export const DEFAULT_THRESHOLDS: Thresholds = {
 
 const at = (t: Thresholds | null) => t ?? DEFAULT_THRESHOLDS;
 
-/**
- * The six gauges, ordered the way the engine ranks them.
- *
- * This is `PARAMETER_META`'s priority order — emergency, frequency,
- * reserve, peak load, renewables, price — not an arbitrary display order. The
- * operator's console reads top-left to bottom-right in the same sequence the
- * control logic breaks a severity tie, so "which of these two lit gauges won"
- * is answerable by position.
- *
- * NOTE `key` is the *display* key ("reserve"), which is not the backend's
- * `parameter` value ("reserve_margin") used by PARAMETER_ASKS above.
- */
+/** The six gauges, ordered the way the engine ranks them. */
 export const PARAMETER_CONFIGS: ParameterConfig[] = [
   {
     key: "emergency",
@@ -692,8 +536,7 @@ export const PARAMETER_CONFIGS: ParameterConfig[] = [
     triggeredKey: "low_renewable_triggered",
     format: (v) => (v * 100).toFixed(1) + "%",
     thresholdLabel: (t) => `< ${(at(t).low_renewable_fraction * 100).toFixed(0)}%`,
-    // Stored as a fraction but tuned as a percentage — nobody reasons about
-    // "0.15 of the grid". The panel converts on the way in and out.
+    // Stored as a fraction but tuned as a percentage — nobody reasons about "0.15 of the grid".
     tuning: {
       key: "low_renewable_fraction",
       min: 0.05,
@@ -711,8 +554,8 @@ export const PARAMETER_CONFIGS: ParameterConfig[] = [
     valueKey: "retail_price_idr",
     triggeredKey: "price_spike_triggered",
     format: (v) => "Rp " + Math.round(v).toLocaleString(),
-    // Relative, so this one names the multiple rather than a rupiah figure —
-    // the actual trip point moves with the time-of-use base every hour.
+    // Relative, so this one names the multiple rather than a rupiah figure — the actual trip point
+    // moves with the time-of-use base every hour.
     thresholdLabel: (t) => `> ${at(t).price_spike_ratio}× normal`,
     tuning: {
       key: "price_spike_ratio",

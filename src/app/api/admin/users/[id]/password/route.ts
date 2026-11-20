@@ -9,11 +9,7 @@ import { clientIp, json, readBody, requireAdmin, route } from "@/server/http";
 
 const Body = z.object({ password: z.string().min(8).max(72) });
 
-/**
- * Set a household's password. Hashes are one-way, so the only useful ability
- * is replacing a password, never reading one. Every existing session is signed
- * out, and the password never appears in a response or the audit log.
- */
+/** Set a household's password. */
 export const POST = route<IdParams>(async (req, { rt, params }) => {
   const admin = await requireAdmin(req, rt);
   const target = loadTarget(rt.db, (await params).id);

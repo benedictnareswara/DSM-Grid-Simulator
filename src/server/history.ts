@@ -1,13 +1,4 @@
-/**
- * Reading persisted alerts and answers.
- *
- * The one rule: anything a household sees filters on `delivered_at IS NOT NULL`.
- * A row exists from the moment an alert triggers, long before anyone pushes
- * it, and only the gateway's echo stamps delivery. Serving unfiltered rows to
- * a household would deliver alerts around the gateway, which is exactly what
- * the fail-closed design forbids. Admin views have no such filter: seeing what
- * was dropped or is still pending is why the operator looks.
- */
+/** Reading persisted alerts and answers. */
 
 import { and, desc, eq, inArray, isNull, type SQL } from "drizzle-orm";
 import type { ParticipationEntry, ResponseSummary } from "@/lib/types";

@@ -1,9 +1,6 @@
 /**
- * The SQLite database: one file (data/dsm.db by default), created and migrated
- * automatically on first boot. There's nothing to install or configure.
- *
- * better-sqlite3 is synchronous, and that's fine here: queries against a local
- * file take microseconds, well inside the 50 ms between the fastest simulator ticks.
+ * The SQLite database: one file (data/dsm.db by default), created and migrated automatically on
+ * first boot.
  */
 
 import { mkdirSync } from "node:fs";

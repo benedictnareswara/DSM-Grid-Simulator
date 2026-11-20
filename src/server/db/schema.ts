@@ -1,9 +1,4 @@
-/**
- * What goes on disk. The wire shapes are in src/lib/types.ts; the two overlap
- * (`alerts` mirrors most of DSMAlert) but change for different reasons.
- *
- * Timestamps are stored as epoch milliseconds and read back as Date objects.
- */
+/** What goes on disk. */
 
 import { sql } from "drizzle-orm";
 import { type AnySQLiteColumn, index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
@@ -37,10 +32,7 @@ export const users = sqliteTable("users", {
   approvedBy: text("approved_by").references((): AnySQLiteColumn => users.id, { onDelete: "set null" }),
 });
 
-/**
- * One row per issued refresh token, storing only its SHA-256. Rows exist so a
- * session can be revoked: access JWTs can't be, by construction.
- */
+/** One row per issued refresh token, storing only its SHA-256. */
 export const refreshTokens = sqliteTable(
   "refresh_tokens",
   {
@@ -56,18 +48,7 @@ export const refreshTokens = sqliteTable(
   (t) => [index("ix_refresh_tokens_user").on(t.userId)],
 );
 
-/**
- * One row per alert the control logic triggered, not per push attempt. Read
- * the state columns as a lifecycle:
- *
- *   triggered  row exists, pushed_at NULL
- *   pushed     pushed_at set, delivered_at NULL  (the gateway never echoed it)
- *   delivered  delivered_at set                  (the gateway echoed it back)
- *   ignored    ignored_at set
- *
- * Anything a household sees MUST filter on `delivered_at IS NOT NULL`. That
- * filter is the fail-closed gateway rule written into the queries.
- */
+/** One row per alert the control logic triggered, not per push attempt. */
 export const alerts = sqliteTable(
   "alerts",
   {
@@ -83,8 +64,7 @@ export const alerts = sqliteTable(
     value: real("value").notNull(),
     threshold: real("threshold").notNull(),
     rewardIdrPerKwh: real("reward_idr_per_kwh"),
-    // Stored, not recomputed, so retuning the model doesn't restate what past
-    // households agreed to. Null setpoint = "no setpoint", which isn't "shed nothing".
+    // Stored, not recomputed, so retuning the model doesn't restate what past households agreed to.
     expectedShedKwh: real("expected_shed_kwh").notNull().default(0),
     durationMinutes: integer("duration_minutes"),
     targetReductionW: real("target_reduction_w"),
@@ -93,6 +73,8 @@ export const alerts = sqliteTable(
     pushedBy: text("pushed_by").references(() => users.id, { onDelete: "set null" }),
     autoPushed: integer("auto_pushed", { mode: "boolean" }).notNull().default(false),
     pushAttempts: integer("push_attempts").notNull().default(0),
+    // Whether a gateway was attached when the latest push went out.
+    pushRelayed: integer("push_relayed", { mode: "boolean" }).notNull().default(false),
     deliveredAt: ts("delivered_at"),
     ignoredAt: ts("ignored_at"),
     ignoredBy: text("ignored_by").references(() => users.id, { onDelete: "set null" }),
@@ -107,11 +89,7 @@ export const alerts = sqliteTable(
   ],
 );
 
-/**
- * One household's answer to one alert. Unique per (alert, user): changing your
- * mind updates the row, so each household gets one vote. Written only when the
- * gateway echoes `forward_response`.
- */
+/** One household's answer to one alert. */
 export const alertResponses = sqliteTable(
   "alert_responses",
   {
@@ -125,7 +103,6 @@ export const alertResponses = sqliteTable(
     accepted: integer("accepted", { mode: "boolean" }).notNull(),
     respondedAt: ts("responded_at").notNull(),
     // How many accepts in a row this one made, counting itself (0 on a decline).
-    // The one incentive figure that's stored, because it can't be recomputed honestly.
     streakAtResponse: integer("streak_at_response").notNull().default(0),
   },
   (t) => [
@@ -134,10 +111,7 @@ export const alertResponses = sqliteTable(
   ],
 );
 
-/**
- * Who did what, and when. Append-only. The labels are snapshots rather than
- * joins, so an entry still names an account after that account is deleted.
- */
+/** Who did what, and when. */
 export const auditLog = sqliteTable(
   "audit_log",
   {

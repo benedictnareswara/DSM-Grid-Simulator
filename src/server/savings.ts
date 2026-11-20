@@ -1,12 +1,4 @@
-/**
- * What the programme is estimated to have saved. One builder serves the
- * operator (every household) and a single household, so the two figures can't
- * be different computations that happen to look alike.
- *
- * Modelled, not metered. The household view filters on delivered alerts,
- * because crediting a household for an alert the gateway never forwarded
- * would leak past the gateway just as surely as showing them the alert.
- */
+/** What the programme is estimated to have saved. */
 
 import { and, count, eq, isNotNull, isNull, sum } from "drizzle-orm";
 import type { SavingsBucket, SavingsPoint, SavingsSummary } from "@/lib/types";
@@ -64,8 +56,6 @@ export function summarise(db: Conn, userId: string | null): SavingsSummary {
   );
 
   // What this household was asked for, answered or not: every delivered alert.
-  // Only meaningful per household; programme-wide it would be alerts ×
-  // households, so the operator view leaves it at zero.
   let offeredKwh = 0;
   let offeredAlerts = 0;
   if (householdView) {

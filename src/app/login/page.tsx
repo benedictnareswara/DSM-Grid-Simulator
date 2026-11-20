@@ -28,8 +28,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
-    // No artificial delay any more — this is a real network round trip that
-    // includes a bcrypt verify, so it takes as long as it takes.
+    // No artificial delay any more — this is a real network round trip that includes a bcrypt
+    // verify, so it takes as long as it takes.
     const result = await login(username, password);
     if (!result.success) setError(result.error ?? null);
     setIsSubmitting(false);
@@ -49,9 +49,6 @@ export default function LoginPage() {
   if (isAuthenticated) return null;
 
   // "Waiting for approval" is not a failed login and should not read like one.
-  // The password was correct; the account simply isn't usable yet, and there is
-  // nothing the person can do about it except wait — so it gets its own,
-  // non-alarming treatment rather than the red error box.
   const isPending = error?.code === "account_pending";
 
   return (

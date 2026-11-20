@@ -1,5 +1,6 @@
-import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { z } from "zod";
+import { DELIVERY_GRACE_MS } from "@/lib/constants";
 import { alerts } from "@/server/db/schema";
 import { responsesFor } from "@/server/history";
 import { json, qLimit, qOffset, readQuery, requireAdmin, route } from "@/server/http";
@@ -10,23 +11,23 @@ const Query = z.object({
   offset: qOffset,
   severity: z.string().optional(),
   parameter: z.string().optional(),
-  outcome: z.enum(["pending", "ignored", "delivered", "failed"]).optional(),
+  outcome: z.enum(["pending", "ignored", "delivered", "sending", "failed"]).optional(),
 });
 
-/**
- * Every triggered alert, newest first: pushed, dropped, ignored or still
- * pending. No delivery filter, on purpose; see src/server/history.ts.
- */
+/** Every triggered alert, newest first: pushed, dropped, ignored or still pending. */
 export const GET = route(async (req, { rt }) => {
   await requireAdmin(req, rt);
   const q = readQuery(req, Query);
 
   // `outcome` is derived, so it is expressed with the same predicates as alertOutcome().
+  const graceStart = new Date(Date.now() - DELIVERY_GRACE_MS);
+  const undelivered = and(isNotNull(alerts.pushedAt), isNull(alerts.deliveredAt), isNull(alerts.ignoredAt));
   const outcome = {
     pending: and(isNull(alerts.pushedAt), isNull(alerts.ignoredAt)),
     ignored: isNotNull(alerts.ignoredAt),
     delivered: and(isNotNull(alerts.deliveredAt), isNull(alerts.ignoredAt)),
-    failed: and(isNotNull(alerts.pushedAt), isNull(alerts.deliveredAt), isNull(alerts.ignoredAt)),
+    sending: and(undelivered, eq(alerts.pushRelayed, true), gte(alerts.pushedAt, graceStart)),
+    failed: and(undelivered, or(eq(alerts.pushRelayed, false), lt(alerts.pushedAt, graceStart))),
   };
 
   const rows = rt.db

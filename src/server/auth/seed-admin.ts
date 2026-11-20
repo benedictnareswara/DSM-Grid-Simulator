@@ -4,11 +4,7 @@ import { ROLE_ADMIN, STATUS_ACTIVE, users } from "../db/schema";
 import { env } from "../env";
 import { hashPassword } from "./password";
 
-/**
- * Create the admin account if, and only if, none exists. Deliberately not an
- * upsert: changing ADMIN_PASSWORD in .env later must not reset a password the
- * operator has since changed in the app.
- */
+/** Create the admin account if, and only if, none exists. */
 export async function seedAdmin(db: DB): Promise<void> {
   const existing = db.select().from(users).where(eq(users.role, ROLE_ADMIN)).get();
   if (existing) {

@@ -19,41 +19,28 @@ import { DEFAULT_THRESHOLDS, type GridState, type SavingsSummary, type Threshold
 import { useTheme } from "@/hooks/useTheme";
 
 /**
- * Recharts takes colours as props, so it cannot read a CSS custom property —
- * the palette has to be mirrored in JS and swapped by hand when the scheme
- * changes. Keep these in step with `:root` and its dark block in globals.css.
+ * Recharts takes colours as props, so it cannot read a CSS custom property — the palette has to be
+ * mirrored in JS and swapped by hand when the scheme changes.
  */
 const LIGHT = {
-  text: "#1d1d1f",
-  muted: "#6e6e73",
-  accent: "#0071e3",
+  text: "#1f1f21",
+  muted: "#6b6b72",
+  accent: "#d60c00",
   renew: "#34a853",
   line: "rgba(0,0,0,0.07)",
   limit: "#b45309",
 };
 
 const DARK = {
-  text: "#f5f5f7",
-  muted: "#a1a1a6",
-  accent: "#0a84ff",
+  text: "#f3f3f4",
+  muted: "#a6a6ad",
+  accent: "#ff6359",
   renew: "#5cd68a",
   line: "rgba(255,255,255,0.09)",
   limit: "#f0a94a",
 };
 
-/**
- * The chart palette for the scheme actually being painted.
- *
- * This reads `useTheme()` rather than `matchMedia` directly, and that is
- * load-bearing: the operator can override the OS scheme from the sidebar, so
- * `prefers-color-scheme` is no longer the source of truth. Subscribing to it
- * here would leave the charts drawing the light palette on a manually
- * darkened page — and only for someone who *used* the override, so it would
- * pass every test done by flipping the OS.
- *
- * Everything else on the page recolours through CSS custom properties. Only
- * Recharts needs this, because it takes colours as props.
- */
+/** The chart palette for the scheme actually being painted. */
 function useChartColors() {
   const { resolved } = useTheme();
   return resolved === "dark" ? DARK : LIGHT;
@@ -67,30 +54,7 @@ const VIEWS: { id: ChartView; label: string; title: string }[] = [
   { id: "savings", label: "Saved", title: "Cumulative energy shifted" },
 ];
 
-/**
- * The three views of the run, in one card.
- *
- * Segmented rather than stacked because only one is ever being read, and three
- * permanent charts is three-quarters of the viewport spent on the two nobody is
- * looking at.
- *
- * ## One clock
- *
- * Every series here is plotted against the **simulated** clock — the tick, and
- * the dataset timestamp that belongs to it. That is worth stating because the
- * savings view used to be plotted against `responded_at`, the *real* wall-clock
- * instant a household tapped Accept. Two charts one click apart therefore had
- * two different meanings for the same horizontal position, and on a UTC+7 host
- * the third was also seven hours off, because `responded_at` is stored as UTC
- * and was being sliced as a string. `SavingsPoint` has always carried `tick`;
- * it simply was not being used.
- *
- * ## The trip lines
- *
- * Each chart draws a `ReferenceLine` at the threshold the engine is actually
- * using. A trace with no line on it says how the grid is behaving but not
- * whether that is a problem, which is most of why these read as decorative.
- */
+/** The three views of the run, in one card. */
 export function GridCharts({
   history,
   savings,
@@ -117,20 +81,16 @@ export function GridCharts({
     renewable: s.parameters.renewable_fraction * 100,
   }));
 
-  // Already cumulative and already thinned by the backend (see
-  // routes_savings._series). Labelled by the *alert's* tick, not by when the
-  // answer happened to arrive — see the module note above.
+  // Already cumulative and already thinned by the backend (see routes_savings._series).
   const savingsData = (savings?.series ?? []).map((p) => ({
     tick: p.tick,
     kwh: p.kwh,
     credit: p.credit_idr,
   }));
 
-  // Frequency is a narrow band around 50 Hz, so a domain has to be tight to
-  // show anything — but a *fixed* one silently clips a real excursion off the
-  // top of the chart, which is the one event the view exists for. Derived from
-  // the data with the trip band as a floor, so the lines are always visible and
-  // an outlier widens the axis instead of vanishing.
+  // Frequency is a narrow band around 50 Hz, so a domain has to be tight to show anything — but a
+  // *fixed* one silently clips a real excursion off the top of the chart, which is the one event
+  // the view exists for.
   const freqValues = chartData.map((d) => d.frequency).filter((v) => Number.isFinite(v));
   const freqPad = Math.max(t.freq_deviation_hz * 1.4, 0.25);
   const freqDomain: [number, number] = [
@@ -146,8 +106,7 @@ export function GridCharts({
         {VIEWS.find((v) => v.id === view)?.title}
         <span
           className="ds-segment"
-          // The sliding pill needs to know how many options there are and
-          // which is live. A dynamic value has nowhere to go but inline.
+          // The sliding pill needs to know how many options there are and which is live.
           style={{ "--n": VIEWS.length, "--i": selected } as React.CSSProperties}
         >
           {VIEWS.map((v) => (
@@ -165,11 +124,7 @@ export function GridCharts({
 
       {view === "demand" && (
         <ResponsiveContainer width="100%" height={240}>
-          {/* Two Y axes, not one. These series are kW and percent — on a shared
-              axis the renewable trace was pinned flat against the floor of a
-              scale running to hundreds of kW, which read as "no renewables"
-              rather than "different unit". Both axes are now labelled, because
-              the legend's colours were the only thing saying which was which. */}
+          {/* Two Y axes, not one. */}
           <AreaChart data={chartData} margin={{ top: 18, right: 8, bottom: 0, left: -4 }}>
             <defs>
               <linearGradient id="demandGrad" x1="0" y1="0" x2="0" y2="1">
@@ -204,8 +159,7 @@ export function GridCharts({
             />
             <Tooltip wrapperClassName="ds-tooltip" cursor={{ stroke: c.muted, strokeWidth: 1 }} />
             <Legend wrapperStyle={legendStyle} iconType="plainline" iconSize={14} />
-            {/* Where "not enough clean energy" begins, on the axis it belongs
-                to. Without it the renewable trace is a shape with no verdict. */}
+            {/* Where "not enough clean energy" begins, on the axis it belongs to. */}
             <ReferenceLine
               yAxisId="pct"
               y={t.low_renewable_fraction * 100}
@@ -268,8 +222,7 @@ export function GridCharts({
             />
             <Tooltip wrapperClassName="ds-tooltip" cursor={{ stroke: c.muted, strokeWidth: 1 }} />
             <Legend wrapperStyle={legendStyle} iconType="plainline" iconSize={14} />
-            {/* Both sides of the band. Frequency deviation is symmetric — the
-                gate fires on |50 − f|, so one line would describe half of it. */}
+            {/* Both sides of the band. */}
             <ReferenceLine
               yAxisId="freq"
               y={50 + t.freq_deviation_hz}
@@ -315,8 +268,8 @@ export function GridCharts({
 
       {view === "savings" &&
         (savingsData.length === 0 ? (
-          // A flat line at zero and "nobody has accepted anything yet" look
-          // identical, and only one of them means the programme is working.
+          // A flat line at zero and "nobody has accepted anything yet" look identical, and only one
+          // of them means the programme is working.
           <div className="ds-empty">
             <strong>Nothing shifted yet</strong>
             This fills in as households accept the alerts you push.

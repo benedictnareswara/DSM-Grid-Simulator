@@ -1,15 +1,14 @@
-/**
- * The gateway-brokered alert path over real WebSockets. A test-only fake
- * gateway stands in for the ESP32 and does exactly what the firmware does:
- * echo `relay_alert` back as `forward_alert`, and `relay_response` back as
- * `forward_response`.
- */
+/** The gateway-brokered alert path over real WebSockets. */
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import * as approve from "@/app/api/admin/users/[id]/approve/route";
 import * as respond from "@/app/api/alert/[id]/respond/route";
 import * as alertTest from "@/app/api/alert/test/route";
+import * as alertsList from "@/app/api/alerts/route";
 import * as mine from "@/app/api/alerts/mine/route";
+import { DELIVERY_GRACE_MS } from "@/lib/constants";
+import type { AlertRow } from "@/server/db/schema";
+import { alertOutcome } from "@/server/serialize";
 import * as login from "@/app/api/auth/login/route";
 import * as register from "@/app/api/auth/register/route";
 import * as participation from "@/app/api/participation/route";
@@ -131,6 +130,59 @@ describe("the gateway-brokered alert path", () => {
     expect(rt.hub.gatewayConnected).toBe(false);
     admin.ws.close();
     phone.ws.close();
+  });
+
+  it("reports a push as sending until the gateway confirms it, then tells dashboards", async () => {
+    // A gateway that holds its echo, like the real one's ~1 s round trip.
+    const gw = await TestSocket.open(`${server.url}/ws/gateway?token=${GATEWAY_TOKEN}`);
+    const admin = await TestSocket.open(`${server.url}/ws/admin?token=${adminToken}`);
+    await admin.next("esp32_status", (m) => m.connected === true);
+
+    const pushed = await call(alertTest.POST, {
+      token: adminToken,
+      body: { parameter: "peak_load", severity: "warning" },
+    });
+    const id = pushed.body.alert.id;
+    const relay = await gw.next("relay_alert");
+
+    const outcomeNow = async () =>
+      (await call(alertsList.GET, { token: adminToken, path: "/api/alerts" })).body.find(
+        (a: { alert_id: string }) => a.alert_id === id,
+      )?.outcome;
+    expect(await outcomeNow()).toBe("sending");
+
+    gw.send({ type: "forward_alert", alert: relay.alert });
+    const delivered = await admin.next("alert_delivered");
+    // A nudge with an id, never the alert itself: dashboards refetch for content.
+    expect(delivered).toEqual({ type: "alert_delivered", alert_id: id, tick: relay.alert.tick });
+    expect(await outcomeNow()).toBe("pushed");
+
+    gw.ws.close();
+    await admin.next("esp32_status", (m) => m.connected === false);
+    admin.ws.close();
+  });
+
+  it("calls an unconfirmed push a failure only after the grace window", () => {
+    const pushedAt = new Date("2026-01-01T00:00:00Z");
+    const row = { ignoredAt: null, deliveredAt: null, autoPushed: false, pushedAt, pushRelayed: true } as unknown as AlertRow;
+    expect(alertOutcome(row, pushedAt.getTime() + 1_000)).toBe("sending");
+    // Pushed with no gateway attached: it never left the server, so no grace.
+    expect(alertOutcome({ ...row, pushRelayed: false } as AlertRow, pushedAt.getTime() + 1_000)).toBe("failed-gateway");
+    expect(alertOutcome(row, pushedAt.getTime() + DELIVERY_GRACE_MS + 1)).toBe("failed-gateway");
+    expect(alertOutcome({ ...row, deliveredAt: new Date() } as AlertRow, pushedAt.getTime() + 60_000)).toBe("pushed");
+    expect(alertOutcome({ ...row, pushedAt: null } as AlertRow)).toBeNull();
+  });
+
+  it("tells the household its answer was not delivered when the gateway is down", async () => {
+    expect(rt.hub.gatewayConnected).toBe(false);
+    const answer = await call(respond.POST, {
+      method: "POST",
+      token: householdToken,
+      path: "/api/alert/nope/respond?accepted=true",
+      params: { id: "nope" },
+    });
+    // The phone keys its "Not sent, answer again" state off exactly this.
+    expect(answer.body.esp32_connected).toBe(false);
   });
 
   it("never sends alerts to phones on a tick", async () => {

@@ -9,10 +9,7 @@ import { ApiError, clientIp, json, readBody, route, throttleCheck, throttleClear
 
 const Body = z.object({ username: z.string(), password: z.string() });
 
-/**
- * Exchange credentials for an access/refresh pair. A wrong username and a wrong
- * password get the same error, so the form can't be used to list accounts.
- */
+/** Exchange credentials for an access/refresh pair. */
 export const POST = route(async (req, { rt }) => {
   const body = await readBody(req, Body);
   const username = body.username.trim().toLowerCase();
@@ -34,7 +31,6 @@ export const POST = route(async (req, { rt }) => {
 
   throttleClear(rt, req, username);
   // One transaction for the login stamp, its audit entry and the new session.
-  // (better-sqlite3 transactions are synchronous, so the JWT is signed afterwards.)
   const { updated, refresh } = rt.db.transaction((tx) => {
     const updated = tx.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id)).returning().get();
     recordAudit(tx, AUDIT.USER_LOGIN, {

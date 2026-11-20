@@ -7,26 +7,14 @@ import { PageHeader } from "@/components/PageHeader";
 import { Pager } from "@/components/Pager";
 import { fmt } from "@/lib/format";
 import { FilterBar, FilterSelect, options } from "@/components/FilterBar";
-import { SEVERITIES, PARAMETERS, OUTCOMES } from "@/lib/constants";
+import { SEVERITIES, PARAMETERS, OUTCOMES, DELIVERY_GRACE_MS } from "@/lib/constants";
+import { useAdminSocket } from "../GridSocketProvider";
 
 const LIMIT = 50;
 
-/** How an alert's state reads in the table, with the colour matching severity. */
-/**
- * How a persisted row reads in the table.
- *
- * Switches on the server's `outcome`, which `Alert.outcome` in
- * the server (`alertOutcome`) derives from `ignored_at` / `delivered_at` /
- * `pushed_at`. This used to re-derive it here from those same three
- * timestamps — the same rule, written twice, in two languages, which is the
- * duplication `AlertOutcome`'s own doc comment warns about.
- *
- * The words differ from the live feed's on purpose: a column says
- * "delivered", the feed says "delivered to gateway", because an operator
- * watching the feed is watching the gateway. The *classification* is what
- * must not be restated.
- */
+/** How a persisted row's outcome reads in the table. */
 const OUTCOME_LABEL: Record<AlertOutcome, { text: string; tone: string }> = {
+  sending: { text: "sending…", tone: "ds-tag--sending" },
   pushed: { text: "delivered", tone: "ds-tag--ok" },
   "auto-pushed": { text: "auto-delivered", tone: "ds-tag--ok" },
   "failed-gateway": { text: "not delivered", tone: "ds-tag--bad" },
@@ -41,16 +29,17 @@ function OutcomeCell({ alert }: { alert: PersistedAlert }) {
 }
 
 export default function AlertHistoryPage() {
+  // Refetch when stored history moves (a push, a gateway delivery), so a row read mid-flight as
+  // "sending…" settles here without a reload.
+  const { historyNonce } = useAdminSocket();
   const [rows, setRows] = useState<PersistedAlert[]>([]);
+  const [recheck, setRecheck] = useState(0);
   const [offset, setOffset] = useState(0);
   const [severity, setSeverity] = useState("");
   const [parameter, setParameter] = useState("");
   const [outcome, setOutcome] = useState("");
 
-  // Loading is *derived*, not set at the top of the effect. Calling setState
-  // synchronously in an effect body triggers a cascading render, which the
-  // React Compiler rejects; comparing the request we want against the one we
-  // already have says the same thing with no extra pass.
+  // Loading is *derived*, not set at the top of the effect.
   const query = JSON.stringify({ offset, severity, parameter, outcome });
   const [loadedQuery, setLoadedQuery] = useState<string | null>(null);
   const loading = loadedQuery !== query;
@@ -69,7 +58,16 @@ export default function AlertHistoryPage() {
     return () => {
       cancelled = true;
     };
-  }, [query, offset, severity, parameter, outcome]);
+  }, [query, offset, severity, parameter, outcome, historyNonce, recheck]);
+
+  // A "sending…" row settles one way or the other within the grace window; nothing is broadcast
+  // when the echo never comes, so look again just after.
+  const awaitingEcho = rows.some((r) => r.outcome === "sending");
+  useEffect(() => {
+    if (!awaitingEcho) return;
+    const t = setTimeout(() => setRecheck((n) => n + 1), DELIVERY_GRACE_MS + 1_000);
+    return () => clearTimeout(t);
+  }, [awaitingEcho, rows]);
 
   // Any filter change invalidates the current page number.
   function filter(setter: (v: string) => void, value: string) {

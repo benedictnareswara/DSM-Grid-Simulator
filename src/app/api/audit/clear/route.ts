@@ -3,11 +3,7 @@ import { recordAudit } from "@/server/audit";
 import { AUDIT, auditLog } from "@/server/db/schema";
 import { clientIp, json, requireAdmin, route } from "@/server/http";
 
-/**
- * Empty the operator's view of the audit log. Nothing is deleted: rows get a
- * cleared_at stamp, and the clear itself is logged afterwards, so it's the
- * first row of the new view.
- */
+/** Empty the operator's view of the audit log. */
 export const POST = route(async (req, { rt }) => {
   const admin = await requireAdmin(req, rt);
   const now = new Date();

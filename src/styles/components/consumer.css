@@ -28,6 +28,12 @@
   border-bottom: 1px solid var(--border);
 }
 
+.ds-app__brandrow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
 .ds-app__brand {
   display: flex;
   flex-direction: column;
@@ -96,10 +102,7 @@
   transition: color var(--t-fast), background var(--t-fast);
 }
 
-/* A filled pill rather than a colour swap alone. Colour on its own puts the
-   whole burden of "which tab am I on" on hue, which is the first thing to go
-   at arm's length on a phone in daylight — and the only thing to go for a
-   colour-blind reader. The fill is a second, positional signal. */
+/* A filled pill rather than a colour swap alone. */
 .ds-tab[aria-selected="true"] {
   background: var(--accent-soft);
   color: var(--accent);

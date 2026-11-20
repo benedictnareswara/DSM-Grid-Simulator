@@ -1,13 +1,4 @@
-/**
- * `npm run setup`: writes .env, the only file you need to edit.
- *
- * Asks for the four values only you know (Wi-Fi name and password, and the two
- * boards' MAC addresses) and generates everything else. Safe to run again: it
- * keeps your existing answers as defaults and never replaces generated secrets.
- *
- * Non-interactive: `npm run setup -- --yes` takes answers from environment
- * variables (WIFI_SSID, WIFI_PASSWORD, GATEWAY_MAC, LCU_MAC) and skips the prompts.
- */
+/** `npm run setup`: writes .env, the only file you need to edit. */
 
 import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";

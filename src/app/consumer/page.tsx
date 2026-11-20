@@ -21,9 +21,7 @@ import {
   type SavingsSummary,
   type IncentiveModel,
 } from "@/lib/types";
-// The credit model lives on the backend now. This page used to declare its own
-// ASSUMED_REDUCTION_KWH and multiply — one of four copies that agreed only by
-// coincidence. See frontend/lib/domain.ts.
+// The credit model lives on the backend now.
 import {
   capturedFraction,
   estimatedCredit,
@@ -35,18 +33,20 @@ import {
   throttleLine,
   topSpeedBonus,
 } from "@/lib/domain";
+import { DELIVERY_GRACE_MS } from "@/lib/constants";
 import { Metric } from "@/components/Metric";
 import { Notice } from "@/components/Notice";
 import { Icon, type IconName } from "@/components/Icon";
+import { BrinEmblem } from "@/components/Brand";
 
-type Decision = { action: "accepted" | "declined"; actionAt: string };
+/** One answer. */
+type Decision = {
+  action: "accepted" | "declined";
+  actionAt: string;
+  delivery?: "sending" | "failed";
+};
 
-/**
- * A persisted alert, back in the shape the UI already renders.
- *
- * The two differ only because the database row also records delivery and
- * authorship, which the live `pushed_alert` payload has no need to carry.
- */
+/** A persisted alert, back in the shape the UI already renders. */
 function fromPersisted(row: PersistedAlert): DSMAlert {
   return {
     id: row.alert_id,
@@ -60,11 +60,8 @@ function fromPersisted(row: PersistedAlert): DSMAlert {
     value: row.value,
     threshold: row.threshold,
     reward_idr_per_kwh: row.reward_idr_per_kwh,
-    // Must be copied, or a *restored* alert loses what it asks for and the
-    // pre-answer preview reads "no bill credit applies to this alert" for one
-    // worth thousands of rupiah. Live socket arrivals carry it; history has to
-    // be given it explicitly. Same trap for the throttle pair below — omit
-    // them and the setpoint silently disappears on reload.
+    // Must be copied, or a *restored* alert loses what it asks for and the pre-answer preview reads
+    // "no bill credit applies to this alert" for one worth thousands of rupiah.
     expected_shed_kwh: row.expected_shed_kwh,
     duration_minutes: row.duration_minutes,
     target_reduction_w: row.target_reduction_w,
@@ -72,11 +69,7 @@ function fromPersisted(row: PersistedAlert): DSMAlert {
   };
 }
 
-/**
- * Grid conditions in household language, for the savings breakdown. The raw
- * `parameter` values ("reserve_margin", "peak_load") are the operator's
- * vocabulary and mean nothing on a phone.
- */
+/** Grid conditions in household language, for the savings breakdown. */
 const PARAMETER_LABELS: Record<string, string> = {
   peak_load: "Peak demand",
   frequency: "Grid frequency",
@@ -106,9 +99,7 @@ export default function ConsumerApp() {
     esp32Connected,
     authFailed,
     resetNonce,
-    // Answers this household gave on another device, echoed back through the
-    // gateway. Without it a laptop tab and a phone disagreed about what had
-    // been answered until one of them was reloaded.
+    // Answers this household gave on another device, echoed back through the gateway.
     remoteDecisions,
   } = useGridWebSocket({
     clientType: "consumer",
@@ -116,8 +107,8 @@ export default function ConsumerApp() {
   });
   const notifications = useAlertNotifications();
 
-  // The socket was rejected and could not be refreshed — this household was
-  // suspended or deleted while the app was open.
+  // The socket was rejected and could not be refreshed — this household was suspended or deleted
+  // while the app was open.
   useEffect(() => {
     if (authFailed) router.replace("/login");
   }, [authFailed, router]);
@@ -126,54 +117,32 @@ export default function ConsumerApp() {
   const [noticeDismissed, setNoticeDismissed] = useState(false);
 
   // The only state this page owns is the user's own answers, keyed by alert.
-  // The feed itself is derived from `pushedAlerts` during render rather than
-  // copied into a second list by an effect — one source of truth, and no
-  // cascading re-render when an alert lands.
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
 
-  // Alerts restored from the server on load, plus the answers this household
-  // already gave them. Before this, a reload emptied the feed completely —
-  // every alert lived only in the socket hook's memory.
+  // Alerts restored from the server on load, plus the answers this household already gave them.
   const [restored, setRestored] = useState<DSMAlert[]>([]);
   const [restoredDecisions, setRestoredDecisions] = useState<Record<string, Decision>>({});
 
-  // The server's own tally of what this household saved, with the speed and
-  // streak bonuses already applied. The page cannot compute these: a bonus
-  // depends on the gateway's delivery stamp and on answers given in other
-  // sessions, neither of which is in this tab's memory.
+  // The server's own tally of what this household saved, with the speed and streak bonuses already
+  // applied.
   const [savings, setSavings] = useState<SavingsSummary | null>(null);
   const [savingsNonce, setSavingsNonce] = useState(0);
-  // An answer from another device changes this household's totals, so the
-  // server's figures have to be pulled again — the same reasoning as
-  // `savingsNonce` after answering here. A count is enough: the echo only ever
-  // adds entries, so the size moving means a new answer landed.
-  const remoteAnswerCount = Object.keys(remoteDecisions).length;
+  // An answer from another device changes this household's totals, so the server's figures have to
+  // be pulled again — the same reasoning as `savingsNonce` after answering here.
   const [model, setModel] = useState<IncentiveModel | null>(null);
 
-  // The operator reset the simulation: the hook has already emptied
-  // `pushedAlerts`, so these answers refer to alerts that no longer exist.
-  // Adjusting during render is React's documented pattern for this; an effect
-  // would be a second pass and would trip the React Compiler's
-  // set-state-in-effect rule.
   const [nonceSeen, setNonceSeen] = useState(resetNonce);
   if (resetNonce !== nonceSeen) {
     setNonceSeen(resetNonce);
     setDecisions({});
-    // Restored history has to go too. The backend soft-clears its rows on
-    // reset, so a refetch would return nothing anyway — but leaving these in
-    // place would keep the old feed on screen until the next reload, which is
-    // exactly the stale-dashboard problem system_reset exists to prevent.
+    // Restored history has to go too.
     setRestored([]);
     setRestoredDecisions({});
-    // Savings are per-alert state and die with the alerts. Cleared here rather
-    // than refetched so the tab never shows a total for a run that no longer
-    // exists — the rule in docs/ARCHITECTURE.md for anything hung off an alert.
+    // Savings are per-alert state and die with the alerts.
     setSavings(null);
   }
 
-  // Rehydrate on mount. The backend only returns alerts the ESP32 actually
-  // forwarded, so this cannot surface anything the gateway did not approve —
-  // see the header of src/server/history.ts.
+  // Rehydrate on mount.
   useEffect(() => {
     if (!isAuthenticated) return;
     let cancelled = false;
@@ -186,9 +155,9 @@ export default function ConsumerApp() {
           if (row.my_response !== null && row.my_response !== undefined) {
             answers[row.alert_id + row.tick] = {
               action: row.my_response ? "accepted" : "declined",
-              // triggered_at last because it is the only one guaranteed set —
-              // pushed_at is null on an alert nobody pushed, though a row with
-              // a my_response will always have been delivered.
+              // triggered_at last because it is the only one guaranteed set — pushed_at is null on
+              // an alert nobody pushed, though a row with a my_response will always have been
+              // delivered.
               actionAt: row.delivered_at ?? row.pushed_at ?? row.triggered_at,
             };
           }
@@ -197,8 +166,7 @@ export default function ConsumerApp() {
         setRestoredDecisions(answers);
       })
       .catch(() => {
-        // History is a convenience; a live socket is the actual product. Fail
-        // quiet rather than blocking the feed on it.
+        // History is a convenience; a live socket is the actual product.
       });
 
     return () => {
@@ -206,10 +174,7 @@ export default function ConsumerApp() {
     };
   }, [isAuthenticated]);
 
-  // Savings, refetched whenever this household answers something. Separate from
-  // the history fetch above because it is the *server's* arithmetic — the speed
-  // and streak bonuses depend on the gateway's delivery stamp and on answers
-  // given in other sessions, so the page cannot derive them from its own feed.
+  // Savings, refetched whenever this household answers something.
   useEffect(() => {
     if (!isAuthenticated) return;
     let cancelled = false;
@@ -218,16 +183,14 @@ export default function ConsumerApp() {
         if (!cancelled) setSavings(s);
       })
       .catch(() => {
-        // A missing total is not a reason to hide the alerts. Falls back to
-        // the locally-derivable estimate below.
+        // A missing total is not a reason to hide the alerts.
       });
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated, savingsNonce, resetNonce, remoteAnswerCount]);
+  }, [isAuthenticated, savingsNonce, resetNonce, remoteDecisions]);
 
-  // The model, once. Static for the life of the backend, and only needed to
-  // quote the speed bonus a household could still earn on a pending alert.
+  // The model, once.
   useEffect(() => {
     if (!isAuthenticated) return;
     let cancelled = false;
@@ -241,9 +204,7 @@ export default function ConsumerApp() {
     };
   }, [isAuthenticated]);
 
-  // Live arrivals first, then anything from history not already present. Keyed
-  // on id + tick, the same composite key used everywhere else — an alert that
-  // arrived this session is also in the database, and must not appear twice.
+  // Live arrivals first, then anything from history not already present.
   const liveKeys = new Set(pushedAlerts.map((a) => a.id + a.tick));
   const feed: DSMAlert[] = [
     ...pushedAlerts,
@@ -251,44 +212,36 @@ export default function ConsumerApp() {
   ];
 
   const alertLog: AlertLogEntry[] = feed.map((alert) => {
-    // Three sources, most immediate first. A decision made in this session
-    // wins because it is optimistic and lands before the round trip has
-    // persisted it; a `remoteDecisions` echo is this household answering on
-    // another device *now*, so it outranks the load-time snapshot; the
-    // restored answer is the floor.
-    //
-    // `remoteDecisions` is keyed by alert id alone — that is all the echo
-    // carries — which is safe because ids are unique per trigger.
+    // Three sources, most immediate first.
     const key = alert.id + alert.tick;
     const remote = remoteDecisions[alert.id];
-    const decision =
-      decisions[key] ??
-      (remote
-        ? {
-            action: remote.accepted ? ("accepted" as const) : ("declined" as const),
-            actionAt: remote.respondedAt,
-          }
-        : undefined) ??
-      restoredDecisions[key];
+    const remoteDecision: Decision | undefined = remote
+      ? { action: remote.accepted ? "accepted" : "declined", actionAt: remote.respondedAt }
+      : undefined;
+    const local = decisions[key];
+    // A local answer still in flight is confirmed by an echo of the same answer; until then it is
+    // only a tap.
+    const confirmed =
+      local?.delivery === "sending" && remoteDecision?.action === local.action ? remoteDecision : undefined;
+    const decision = confirmed ?? local ?? remoteDecision ?? restoredDecisions[key];
+
+    if (decision?.delivery === "failed") {
+      // The answer reached nobody.
+      return { alert, action: "pending", delivery: "failed", failedAction: decision.action };
+    }
     return {
       alert,
       action: decision?.action ?? "pending",
       actionAt: decision?.actionAt,
+      delivery: decision?.delivery,
     };
   });
 
-
-  // Composite id of the most recent alert already announced. notify()'s
-  // identity changes when permission does, which re-runs the effect below —
-  // this is what stops that re-run from replaying the last alert.
+  // Composite id of the most recent alert already announced.
   const lastAnnouncedRef = useRef<string | null>(null);
   const { notify } = notifications;
 
-  // Announce arrivals. Alerts reach this page only as `pushed_alert`, which
-  // means they have already completed the full
-  // admin -> backend -> ESP32 -> backend -> consumer round trip. Raising an OS
-  // notification here adds no delivery channel; it renders one the hardware
-  // broker already approved. Nothing in this effect sets React state.
+  // Announce arrivals.
   useEffect(() => {
     const newest = pushedAlerts[0];
     if (!newest) return;
@@ -301,15 +254,44 @@ export default function ConsumerApp() {
     notify(newest);
   }, [pushedAlerts, notify]);
 
-  const settle = useCallback((alert: DSMAlert, action: "accepted" | "declined") => {
+  // Read by the delivery timeout, which outlives the render it was set in.
+  const remoteRef = useRef(remoteDecisions);
+  useEffect(() => {
+    remoteRef.current = remoteDecisions;
+  }, [remoteDecisions]);
+
+  /** Answer an alert. */
+  const settle = useCallback(async (alert: DSMAlert, action: "accepted" | "declined") => {
+    const key = alert.id + alert.tick;
+    const mark = (delivery: Decision["delivery"]) =>
+      setDecisions((prev) =>
+        // Only touch the answer this call made: a second tap supersedes it.
+        prev[key]?.action === action && prev[key]?.delivery === "sending"
+          ? { ...prev, [key]: { ...prev[key], delivery } }
+          : prev,
+      );
+
     setDecisions((prev) => ({
       ...prev,
-      [alert.id + alert.tick]: { action, actionAt: new Date().toISOString() },
+      [key]: { action, actionAt: new Date().toISOString(), delivery: "sending" },
     }));
-    apiRespondToAlert(alert.id, action === "accepted").catch(console.error);
-    // Pull the totals back once the answer has been through the gateway. The
-    // credit for this alert depends on how fast it was answered and on the
-    // streak it continued, so only the server can say what it was worth.
+
+    let relayed = false;
+    try {
+      relayed = (await apiRespondToAlert(alert.id, action === "accepted")).esp32_connected;
+    } catch (err) {
+      console.error("Respond failed:", err);
+    }
+    if (!relayed) {
+      mark("failed");
+      return;
+    }
+    // Handed to the gateway.
+    setTimeout(() => {
+      const echoed = remoteRef.current[alert.id];
+      if (echoed && (echoed.accepted ? "accepted" : "declined") === action) return;
+      mark("failed");
+    }, DELIVERY_GRACE_MS);
     setSavingsNonce((n) => n + 1);
   }, []);
 
@@ -320,17 +302,14 @@ export default function ConsumerApp() {
   const pendingCount = alertLog.filter((e) => e.action === "pending").length;
 
   // The server's figures where available, this tab's own estimate where not.
-  // The fallback is deliberately the *floor* — rate × shed, with no bonuses —
-  // so an answer that has not round-tripped yet under-promises rather than
-  // showing a number that drops when the real one lands.
   const creditTotal =
     savings?.total_credit_idr ??
     accepted.reduce((sum, e) => sum + estimatedCredit(e.alert), 0);
   const kwhTotal =
     savings?.total_kwh ?? accepted.reduce((sum, e) => sum + shedKwh(e.alert), 0);
   const speedBonus = topSpeedBonus(model);
-  // What fraction of what was asked for this household actually shifted, and
-  // the streak they are on. Both server-derived — see lib/domain.ts.
+  // What fraction of what was asked for this household actually shifted, and the streak they are
+  // on.
   const captured = capturedFraction(savings);
   const streak = savings?.current_streak ?? 0;
   const streakMultiplier = savings?.streak_multiplier ?? 1;
@@ -349,21 +328,23 @@ export default function ConsumerApp() {
   const p = gridState?.parameters;
   const m = gridState?.measurements;
 
-  // The household's own draw, charged at the live rate. kW x Rp/kWh = Rp/hour.
-  // `measurements` is this house's meter; `parameters` are neighbourhood scale.
-  // Mixing the two in one grid of readings was the old Grid tab's core problem.
+  // The household's own draw, charged at the live rate.
   const costPerHour = p && m ? m.global_active_power * p.retail_price_idr : null;
 
   return (
     <div className="ds-app">
-      {/* ── App bar ──
-          Two badges, because there are two independent paths here and they
-          fail separately: readings come straight from the backend, alerts only
-          arrive via the ESP32 gateway. One "connected" light would hide that. */}
+      {/*
+          ── App bar ── Two badges, because there are two independent paths here and they fail
+          separately: readings come straight from the backend, alerts only arrive via the ESP32
+          gateway.
+      */}
       <header className="ds-app__top">
-        <div className="ds-app__brand">
-          DSM
-          <span>Energy Assistant</span>
+        <div className="ds-app__brandrow">
+          <BrinEmblem size={30} />
+          <div className="ds-app__brand">
+            DSM Grid
+            <span>Energy Assistant · BRIN</span>
+          </div>
         </div>
         <div className="ds-header__aside">
           <span
@@ -390,8 +371,7 @@ export default function ConsumerApp() {
         {/* ── Alerts ── */}
         {tab === "alerts" && (
           <>
-            {/* The state the fail-closed design actually produces, said out
-                loud. An empty feed otherwise looks identical to a calm grid. */}
+            {/* The state the fail-closed design actually produces, said out loud. */}
             {!esp32Connected && (
               <div className="ds-notice ds-notice--warn">
                 <div className="ds-notice__body">
@@ -424,10 +404,7 @@ export default function ConsumerApp() {
               </div>
             ) : (
               alertLog.map((entry) => (
-                // Keyed by the alert's own identity, NOT the array index. New
-                // alerts are prepended, so an index key shifts every row and
-                // remounts the whole list — replaying the entry animation on
-                // every arrival and losing any in-progress interaction.
+                // Keyed by the alert's own identity, NOT the array index.
                 <AlertCard
                   key={entry.alert.id + entry.alert.tick}
                   entry={entry}
@@ -439,34 +416,28 @@ export default function ConsumerApp() {
           </>
         )}
 
-        {/* ── Now ──
-            Household-first: the decision, then this house's own usage and what
-            it is costing. Grid-operator readings are real but secondary, so
-            they live behind a disclosure rather than competing for the top. */}
+        {/*
+            ── Now ── Household-first: the decision, then this house's own usage and what it is
+            costing.
+        */}
         {tab === "now" && (
           <>
             <div className={`ds-verdict ds-verdict--${verdict.level}`}>
               <div className="ds-verdict__label">Right now</div>
               <div className="ds-verdict__headline">{verdict.headline}</div>
               <div className="ds-verdict__detail">{verdict.detail}</div>
-              {/* Why. The verdict used to state an instruction with no reason
-                  attached, which is the difference between an assistant and a
-                  scold. Named from the same triggered flags the verdict itself
-                  switches on, in the engine's own priority order. */}
+              {/* Why. */}
               {verdict.cause && (
                 <div className="ds-verdict__cause">Because {verdict.cause}.</div>
               )}
             </div>
 
-            {/* Draw, rate and what the two multiply out to, in one panel.
-                These were two separate cards with identical structure — a
-                title and one number each — which made the household read two
-                boxes to answer one question. The cost line is the only figure
-                here they can act on, so it is stated rather than left to be
-                worked out from the other two. */}
-            {/* Titled "Your usage", not "Right now" — the verdict block
-                directly above already carries that label, and two identical
-                headings stacked read as one section broken in half. */}
+            {/* Draw, rate and what the two multiply out to, in one panel. */}
+            {/*
+                Titled "Your usage", not "Right now" — the verdict block directly above already
+                carries that label, and two identical headings stacked read as one section broken in
+                half.
+            */}
             <div className="ds-card ds-card--pad-sm ds-stack">
               <div className="ds-title">Your usage</div>
               <div className="ds-grid ds-grid--pair">
@@ -499,8 +470,10 @@ export default function ConsumerApp() {
               <details className="ds-details">
                 <summary>Grid detail</summary>
                 <div className="ds-details__body">
-                  {/* --pair, not --2/--4: this sits in the fixed-width app
-                      column, so it must not re-flow with the browser window. */}
+                  {/*
+                      --pair, not --2/--4: this sits in the fixed-width app column, so it must not
+                      re-flow with the browser window.
+                  */}
                   <div className="ds-grid ds-grid--pair">
                     <Metric
                       label="Spare capacity"
@@ -532,9 +505,7 @@ export default function ConsumerApp() {
         {/* ── Savings ── */}
         {tab === "savings" && (
           <>
-            {/* Energy first, money second. The credit is what makes a household
-                act; the kWh is what the programme actually exists to move, and
-                only one of the two was on screen before. */}
+            {/* Energy first, money second. */}
             <div className="ds-card ds-stack">
               <div className="ds-title">Energy you helped shift</div>
               <div className="ds-metric ds-metric--hero">
@@ -543,15 +514,7 @@ export default function ConsumerApp() {
                   worth about <strong>Rp {idr(creditTotal)}</strong> in bill credit
                 </span>
               </div>
-              {/* How much of what was actually asked for. This replaced a
-                  progress bar against a hardcoded Rp 50,000 "goal" — a number
-                  with nothing behind it, which never reset, so crossing it once
-                  pinned the bar full forever.
-
-                  Measured in kWh rather than rupiah because credit carries the
-                  speed and streak multipliers and could exceed the denominator.
-                  Absent, not zero, before anything has been asked: an empty bar
-                  labelled 0% reads as a failure rather than as a fresh start. */}
+              {/* How much of what was actually asked for. */}
               {captured !== null && savings && (
                 <div>
                   <div className="ds-progress">
@@ -571,16 +534,7 @@ export default function ConsumerApp() {
                 </div>
               )}
 
-              {/* The household's record, as a grouped list rather than three
-                  boxed figures. This was a separate "Your record" card at the
-                  bottom of the tab restating four numbers that were all already
-                  on screen — accepted and declined in the line above, pending on
-                  the tab bar badge.
-
-                  The streak is here rather than behind the "How this is worked
-                  out" disclosure: it is a real, server-computed multiplier the
-                  household is currently earning, and it was the one figure on
-                  the tab that could change their behaviour, hidden. */}
+              {/* The household's record, as a grouped list rather than three boxed figures. */}
               <div className="ds-group">
                 <div className="ds-group__row">
                   <span className="ds-group__label">Alerts you answered</span>
@@ -605,10 +559,7 @@ export default function ConsumerApp() {
               </div>
             </div>
 
-            {/* Where it came from, by grid condition. The per-alert ledger this
-                replaced could not survive a reload — it was built from this
-                tab's own feed — and it said nothing about which conditions the
-                household was actually helping with. */}
+            {/* Where it came from, by grid condition. */}
             <div className="ds-card ds-card--pad-sm">
               <div className="ds-title">Where it came from</div>
               {!savings || savings.by_parameter.length === 0 ? (
@@ -632,10 +583,10 @@ export default function ConsumerApp() {
               )}
             </div>
 
-            {/* What the household is currently earning above the base rate,
-                folded in beside the disclaimer that explains those same
-                multipliers. It was its own card quoting theoretical maxima —
-                the one figure on the tab a household could not act on. */}
+            {/*
+                What the household is currently earning above the base rate, folded in beside the
+                disclaimer that explains those same multipliers.
+            */}
             <details className="ds-details">
               <summary>How this is worked out</summary>
               <div className="ds-details__body ds-stack">
@@ -656,9 +607,10 @@ export default function ConsumerApp() {
                     <div className="ds-row ds-row--last">
                       <span>Accepting in a row</span>
                       <span className="ds-row__mono">
-                        {/* The ceiling, and where they actually are on the way
-                            to it — a theoretical maximum on its own is the one
-                            number here nobody can act on. */}
+                        {/*
+                            The ceiling, and where they actually are on the way to it — a
+                            theoretical maximum on its own is the one number here nobody can act on.
+                        */}
                         {streak > 1 && `${multiplier(streakMultiplier)} now · `}
                         up to{" "}
                         {multiplier(
@@ -709,8 +661,8 @@ export default function ConsumerApp() {
 /* ── Pieces ─────────────────────────────────────────────────────────── */
 
 /**
- * One alert, stating the commitment before asking for a decision — the old
- * "Participate / Opt Out" buttons never said what participating meant.
+ * One alert, stating the commitment before asking for a decision — the old "Participate / Opt Out"
+ * buttons never said what participating meant.
  */
 function AlertCard({
   entry,
@@ -725,9 +677,7 @@ function AlertCard({
   const alert = entry.alert;
   const isPending = entry.action === "pending";
   const ask = PARAMETER_ASKS[alert.parameter] ?? DEFAULT_PARAMETER_ASK;
-  // The floor: rate × shed, no multipliers. Answering fast or continuing a
-  // streak pays more, and quoting the optimistic figure up front would mean
-  // showing a number the household then misses by taking a minute to think.
+  // The floor: rate × shed, no multipliers.
   const credit = estimatedCredit(alert);
   const shed = shedKwh(alert);
   const throttle = throttleLine(alert);
@@ -744,7 +694,10 @@ function AlertCard({
             <div className="ds-alert__title">{alert.title}</div>
             <div className="ds-alert__msg">{alert.message}</div>
           </div>
-          {!isPending && (
+          {!isPending && entry.delivery === "sending" && (
+            <span className="ds-badge ds-badge--sending">Sending…</span>
+          )}
+          {!isPending && entry.delivery !== "sending" && (
             <span
               className={`ds-badge ${entry.action === "accepted" ? "ds-badge--accepted" : "ds-badge--declined"}`}
             >
@@ -755,15 +708,19 @@ function AlertCard({
 
         {isPending ? (
           <>
+            {entry.delivery === "failed" && (
+              <Notice tone="error" title="Your answer didn't reach the operator">
+                The gateway didn&rsquo;t pass on your{" "}
+                {entry.failedAction === "declined" ? "decline" : "accept"}. Check the
+                gateway light at the top, then answer again.
+              </Notice>
+            )}
             <div className="ds-sheet">
               <div className="ds-sheet__row">
                 <span className="ds-sheet__label">You do</span>
                 <span className="ds-sheet__value">{ask}</span>
               </div>
-              {/* The same ask as a setpoint, which is what the upcoming
-                  throttle will hold. Guarded: alerts from before the throttle
-                  model carry no window, and inventing one would state a
-                  commitment nobody asked for. */}
+              {/* The same ask as a setpoint, which is what the upcoming throttle will hold. */}
               {throttle && (
                 <div className="ds-sheet__row">
                   <span className="ds-sheet__label">Roughly</span>
@@ -778,10 +735,7 @@ function AlertCard({
                     : "You help stabilise the grid. No bill credit applies to this alert."}
                 </span>
               </div>
-              {/* The reason to answer *now* rather than later, stated before the
-                  buttons. The bonus is real and already measured from the
-                  gateway's delivery — it was simply never shown to the person
-                  who could earn it. */}
+              {/* The reason to answer *now* rather than later, stated before the buttons. */}
               {credit > 0 && speedBonus && (
                 <div className="ds-sheet__row">
                   <span className="ds-sheet__label">If quick</span>
@@ -835,12 +789,7 @@ function AlertCard({
   );
 }
 
-/**
- * Explains why notifications are or aren't available, rather than silently
- * doing nothing. The insecure-context case is the common one: a phone on the
- * LAN reaches this app over plain HTTP, where browsers withhold the
- * Notification API entirely.
- */
+/** Explains why notifications are or aren't available, rather than silently doing nothing. */
 function NotificationNotice({
   support,
   permission,
@@ -916,8 +865,7 @@ function NotificationNotice({
     );
   }
 
-  // Granted. Nudge toward installing, unless already running as an installed
-  // app — that case is hidden by CSS, no JS or hydration risk involved.
+  // Granted.
   return (
     <div className="ds-notice ds-install-hint">
       <div className="ds-notice__body">

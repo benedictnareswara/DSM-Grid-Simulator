@@ -1,22 +1,4 @@
-/**
- * The icon set, as inline SVG.
- *
- * No dependency, and no icon font. Every glyph is drawn on the same 24px grid
- * with a 1.5px stroke in `currentColor`, so an icon inherits the colour and the
- * disabled state of whatever it sits in — which is the entire reason not to
- * reach for an image.
- *
- * What this replaces: the app used to draw its icons as text. The consumer tab
- * bar was `!`, `~` and `Rp`; the settings button was `⚙`; tiles ended in `→`,
- * disclosures in `▸`, dismiss buttons in `✕`. Those are typographic characters
- * standing in for symbols — they render at a different weight in every font,
- * they cannot be sized independently of the label beside them, and a screen
- * reader announces them.
- *
- * Keep them decorative: every one of these is `aria-hidden`, so the control
- * around it must carry its own accessible name. An icon-only button needs an
- * `aria-label`.
- */
+/** The icon set, as inline SVG. */
 
 export type IconName =
   | "alerts"
@@ -40,8 +22,7 @@ export type IconName =
   | "menu"
   | "logout";
 
-/** The path geometry. Everything shared (viewBox, stroke, joins) is on the
- *  `<svg>` below, so a new icon is one entry here and nothing else. */
+/** The path geometry. */
 const PATHS: Record<IconName, React.ReactNode> = {
   // A bell. The alerts tab and anything announcing an arrival.
   alerts: (
@@ -66,8 +47,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </>
   ),
-  // Faders. The threshold panel — six values being tuned, which is what this
-  // control actually is.
+  // Faders.
   sliders: (
     <>
       <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3" />
@@ -133,8 +113,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
 
-  // The three appearance choices. Sun and moon are literal; "auto" is a
-  // half-filled disc, the conventional mark for "whatever the system says".
+  // The three appearance choices.
   sun: (
     <>
       <circle cx="12" cy="12" r="4" />
@@ -161,12 +140,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
   ),
 };
 
-/**
- * One inline SVG glyph from the local set.
- *
- * Local rather than an icon package: the set is small, and this keeps the
- * icons theme-aware through `currentColor` with nothing to load at runtime.
- */
+/** One inline SVG glyph from the local set. */
 export function Icon({
   name,
   size = 18,

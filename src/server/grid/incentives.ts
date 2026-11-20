@@ -1,20 +1,4 @@
-/**
- * The incentive model: what an alert asks for and what answering it is worth.
- *
- * Everything here is a *model*. The simulator replays a fixed recording, so a
- * household tapping Accept cannot move the meter. Every kWh is what the alert
- * asked for and every rupiah is an estimate of the credit that would follow.
- * Both clients say so on screen.
- *
- * Four inputs:
- *   shed    how much load the alert asks for (parameter × severity)
- *   rate    Rp/kWh, set per parameter by the control logic
- *   speed   answering within minutes of delivery pays more
- *   streak  consecutive accepts pay more, capped
- *
- * Credit is derived on read. Streak is stored as a snapshot on the response
- * row, because responses can be changed later and recomputing would rewrite history.
- */
+/** The incentive model: what an alert asks for and what answering it is worth. */
 
 import type { Severity } from "@/lib/types";
 import {
@@ -30,8 +14,6 @@ export const SHED_KWH_BY_PARAMETER: Record<string, number> = Object.fromEntries(
   Object.entries(PARAMETER_META).map(([k, v]) => [k, v.shed_kwh]),
 );
 
-// An alert with a parameter this table doesn't know behaves like the old flat
-// model rather than silently paying zero.
 export const DEFAULT_SHED_KWH = 1.0;
 
 export const SHED_MULTIPLIER_BY_SEVERITY: Record<Severity, number> = {
@@ -55,10 +37,7 @@ export function throttleWindowMinutes(severity: string): number {
   return THROTTLE_WINDOW_MINUTES_BY_SEVERITY[severity as Severity] ?? DEFAULT_THROTTLE_WINDOW_MINUTES;
 }
 
-/**
- * Watts to hold for `durationMinutes` to shed `shedKwh`. A bad window asks for
- * nothing rather than for infinity.
- */
+/** Watts to hold for `durationMinutes` to shed `shedKwh`. */
 export function throttleSetpoint(shedKwh: number, durationMinutes: number): number {
   if (durationMinutes <= 0) return 0.0;
   return pyRound((shedKwh * 60_000.0) / durationMinutes, 3);
@@ -72,9 +51,7 @@ export function shedFromSetpoint(targetReductionW: number, durationMinutes: numb
 
 // ── Speed: answering while it still helps ────────────────────────────────────
 
-// Fastest first; the first tier the latency fits wins. Latency is measured from
-// the gateway's delivery, never from the trigger, so an operator's delay in
-// pushing never counts against the household.
+// Fastest first; the first tier the latency fits wins.
 export const RESPONSE_BONUS_TIERS: ReadonlyArray<readonly [number, number, string]> = [
   [120.0, 1.25, "within 2 minutes"],
   [300.0, 1.1, "within 5 minutes"],

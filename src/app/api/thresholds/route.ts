@@ -18,11 +18,7 @@ export const GET = route(async (req, { rt }) => {
   return json(rt.simulator.control.thresholds);
 });
 
-/**
- * Retune what the engine alerts on. Takes effect on the next tick. It's audited
- * with the previous values, so the log entry is a diff, and broadcast so every
- * open dashboard's gauges move their trip points.
- */
+/** Retune what the engine alerts on. */
 export const POST = route(async (req, { rt }) => {
   const admin = await requireAdmin(req, rt);
   const body = await readBody(req, Body);

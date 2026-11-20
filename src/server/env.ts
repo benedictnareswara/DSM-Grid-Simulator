@@ -2,20 +2,15 @@ import path from "node:path";
 import { z } from "zod";
 
 /**
- * Server settings, read once from process.env (server.ts loads `.env` into it
- * before anything else runs).
- *
- * Secrets have no defaults on purpose. A defaulted signing key is worse than a
- * missing one: everything keeps working and the tokens can be forged by anyone
- * who has read this file. Instead the server refuses to start and says what to run.
+ * Server settings, read once from process.env (server.ts loads `.env` into it before anything else
+ * runs).
  */
 
 const URL_SAFE = /^[A-Za-z0-9_-]+$/;
 
 const schema = z.object({
   JWT_SECRET: z.string().min(32, "must be at least 32 characters"),
-  // Checked in constant time against `?token=` on /ws/gateway. URL-safe because
-  // it travels as a query parameter; the firmware compiles in this same value.
+  // Checked in constant time against `?token=` on /ws/gateway.
   GATEWAY_TOKEN: z.string().min(16).regex(URL_SAFE, "must be URL-safe (A-Z a-z 0-9 _ -)"),
 
   // Used only on the first boot that finds no admin account (see seed-admin.ts).

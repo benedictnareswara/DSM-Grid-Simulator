@@ -6,11 +6,7 @@ import { AUDIT, STATUS_SUSPENDED, users } from "@/server/db/schema";
 import { clientIp, json, requireAdmin, route } from "@/server/http";
 import { userOut } from "@/server/serialize";
 
-/**
- * Suspend an account. Revoking its refresh tokens stops it getting new access
- * tokens; closing its sockets stops the token it already holds from streaming.
- * Both are needed.
- */
+/** Suspend an account. */
 export const POST = route<IdParams>(async (req, { rt, params }) => {
   const admin = await requireAdmin(req, rt);
   const target = loadTarget(rt.db, (await params).id);

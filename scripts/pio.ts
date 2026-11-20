@@ -1,9 +1,4 @@
-/**
- * Runs PlatformIO against firmware/ for the flash/monitor npm scripts.
- *
- * Finds `pio` on PATH, or where the VS Code PlatformIO extension installs it
- * (which is not on PATH), so beginners don't have to fix their PATH first.
- */
+/** Runs PlatformIO against firmware/ for the flash/monitor npm scripts. */
 
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";

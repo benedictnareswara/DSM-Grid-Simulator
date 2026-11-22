@@ -52,7 +52,7 @@ export default function LoginPage() {
   const isPending = error?.code === "account_pending";
 
   return (
-    <AuthShell subtitle="Indonesian PLN Grid · 220V / 50Hz · Neighborhood Scale">
+    <AuthShell subtitle="Demand-side management for a 220 V, 50 Hz PLN neighbourhood.">
       <div className="ds-card ds-card--strip">
         <div className="ds-card__head">
           <span className="ds-card__title">Sign in</span>

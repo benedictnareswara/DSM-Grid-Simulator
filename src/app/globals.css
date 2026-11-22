@@ -13,6 +13,7 @@
 @import "../styles/components/controls.css" layer(components);
 @import "../styles/components/consumer.css" layer(components);
 @import "../styles/components/tables.css" layer(components);
+@import "../styles/components/type.css" layer(components);
 @import "../styles/components/overrides.css" layer(components);
 
 /*
@@ -60,5 +61,4 @@
   --shadow-e3: var(--e3);
 
   --font-sans: var(--font);
-  --font-mono: var(--mono);
 }

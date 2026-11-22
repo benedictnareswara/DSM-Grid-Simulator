@@ -51,7 +51,6 @@ textarea {
 .ds-alert__time,
 .ds-card__meta,
 .ds-step__value {
-  font-family: var(--mono);
   font-variant-numeric: tabular-nums;
 }
 

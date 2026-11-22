@@ -36,7 +36,7 @@ export default function RegisterPage() {
 
   if (submitted) {
     return (
-      <AuthShell subtitle="Household account · approved by an operator">
+      <AuthShell subtitle="Create a household account. An operator approves it before alerts reach you.">
         <div className="ds-card ds-card--strip">
           <div className="ds-card__head">
             <span className="ds-card__title">Account created</span>
@@ -61,7 +61,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthShell subtitle="Household account · approved by an operator">
+    <AuthShell subtitle="Create a household account. An operator approves it before alerts reach you.">
       <div className="ds-card ds-card--strip">
         <div className="ds-card__head">
           <span className="ds-card__title">New household</span>

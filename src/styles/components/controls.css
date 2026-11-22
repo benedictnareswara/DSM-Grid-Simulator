@@ -98,12 +98,6 @@
   grid-template-columns: repeat(2, 1fr);
 }
 
-/* The six live gauges, one row on a console-width screen. */
-.ds-grid--6 {
-  grid-template-columns: repeat(6, 1fr);
-  gap: var(--sp-3);
-}
-
 /* Feed beside charts. */
 .ds-grid--feed {
   grid-template-columns: 1.35fr 1fr;
@@ -494,8 +488,10 @@
 
 /* ── Verdict ────────────────────────────────────────────────────────── */
 .ds-verdict {
-  padding: var(--sp-6);
-  border-radius: var(--r-xl);
+  --level: var(--border-strong);
+  padding: var(--sp-5);
+  border-top: 4px solid var(--level);
+  border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--e1);
   display: flex;
@@ -504,29 +500,15 @@
 }
 
 .ds-verdict--good {
-  background: var(--ok-soft);
-  box-shadow: none;
+  --level: var(--ok);
 }
 
 .ds-verdict--ease {
-  background: var(--sev-warning-soft);
-  box-shadow: none;
+  --level: var(--sev-warning);
 }
 
 .ds-verdict--cut {
-  background: var(--sev-emergency-soft);
-  box-shadow: none;
-}
-
-.ds-verdict--unknown {
-  background: var(--surface-2);
-  box-shadow: none;
-}
-
-.ds-verdict__label {
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  color: var(--text-muted);
+  --level: var(--sev-emergency);
 }
 
 .ds-verdict__headline {

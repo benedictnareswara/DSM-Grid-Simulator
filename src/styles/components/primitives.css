@@ -703,6 +703,22 @@ select.ds-input,
   color: var(--sev-emergency);
 }
 
+/* In the operator feed, alerts are rows of one list: the rail marks severity, so no card or tint. */
+.ds-feedlist {
+  padding: 0;
+}
+
+.ds-feedlist .ds-alert {
+  border-radius: 0;
+  box-shadow: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-feedlist .ds-alert .ds-alert__strip {
+  background: transparent;
+  padding-bottom: 0;
+}
+
 .ds-alert__body {
   padding: var(--sp-4);
   display: flex;

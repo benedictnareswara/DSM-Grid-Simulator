@@ -82,7 +82,7 @@ export function AccountsPanel({ accountsNonce }: { accountsNonce: number }) {
           <strong>
             {pending.length} {pending.length === 1 ? "household" : "households"}
           </strong>
-          {" · Manage all →"}
+          {", review in Accounts"}
         </span>
       </Link>
 

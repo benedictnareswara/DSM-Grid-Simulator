@@ -51,10 +51,10 @@ export function AlertRow({
   // Say what actually went wrong.
   const failureText =
     outcome === "failed-request"
-      ? "not delivered · request failed"
+      ? "Not delivered: the request failed"
       : alert.auto_push_status === "esp32_offline" && outcome === "failed-gateway"
-        ? "auto-push failed · esp32 down"
-        : "not delivered · esp32 down";
+        ? "Autopush failed: gateway offline"
+        : "Not delivered: gateway offline";
 
   return (
     <div
@@ -111,13 +111,13 @@ export function AlertRow({
         <div className="ds-alert__tags">
           {outcome === "sending" && (
             <span className="ds-tag ds-tag--sending" title="Waiting for the gateway to confirm it forwarded this alert">
-              sending via gateway…
+              Sending through the gateway…
             </span>
           )}
-          {outcome === "auto-pushed" && <span className="ds-tag ds-tag--auto">auto-delivered</span>}
-          {outcome === "pushed" && <span className="ds-tag ds-tag--ok">delivered</span>}
+          {outcome === "auto-pushed" && <span className="ds-tag ds-tag--auto">Auto-delivered</span>}
+          {outcome === "pushed" && <span className="ds-tag ds-tag--ok">Delivered</span>}
           {failed && <span className="ds-tag ds-tag--bad">{failureText}</span>}
-          {outcome === "ignored" && <span className="ds-tag">ignored</span>}
+          {outcome === "ignored" && <span className="ds-tag">Ignored</span>}
           {/* What this alert is asking for, in the operator's own units. */}
           {alert.expected_shed_kwh ? (
             <span

@@ -18,13 +18,11 @@ export function PageHeader({
   return (
     <header className="ds-header">
       <div className="ds-header__titles">
-        {back ? (
+        {back && (
           <Link href={back.href} className="ds-crumb">
             <Icon name="chevronRight" size={14} className="ds-crumb__caret" />
             {back.label}
           </Link>
-        ) : (
-          <p className="ds-eyebrow">Grid Operator</p>
         )}
         <h1 className="ds-header__title">{title}</h1>
         {subtitle && <p className="ds-header__sub">{subtitle}</p>}

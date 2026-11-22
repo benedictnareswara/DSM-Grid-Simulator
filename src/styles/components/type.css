@@ -1,0 +1,19 @@
+/* Display type: headings and readings set like an instrument face. Loaded after the components so it
+   wins over their letter-spacing, which was tuned for a wider face. */
+.ds-header__title,
+.ds-auth__title,
+.ds-hero__headline,
+.ds-verdict__headline,
+.ds-scope__reading,
+.ds-gauge__value,
+.ds-metric__value,
+.ds-hero__tick,
+.ds-modal__title {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+
+.ds-header__title,
+.ds-auth__title {
+  font-weight: 600;
+}

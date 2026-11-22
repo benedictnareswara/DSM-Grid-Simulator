@@ -43,9 +43,15 @@
   }
 }
 
-@media (max-width: 1180px) {
-  .ds-grid--6 {
-    grid-template-columns: repeat(3, 1fr);
+@media (max-width: 1100px) {
+  .ds-gauges {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .ds-gauge:nth-child(3n + 1) {
+    border-left: none;
+  }
+  .ds-gauge:nth-child(n + 4) {
+    border-top: 1px solid var(--border);
   }
 }
 
@@ -54,14 +60,30 @@
   .ds-grid--feed {
     grid-template-columns: 1fr;
   }
+  .ds-scope__body {
+    grid-template-columns: 1fr;
+    gap: var(--sp-3);
+  }
 }
 
 @media (max-width: 560px) {
   .ds-page {
     padding: var(--sp-4) var(--sp-3);
   }
-  .ds-grid--6 {
-    grid-template-columns: repeat(2, 1fr);
+  .ds-gauges {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ds-gauge:nth-child(odd) {
+    border-left: none;
+  }
+  .ds-gauge:nth-child(even) {
+    border-left: 1px solid var(--border);
+  }
+  .ds-gauge:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
+  .ds-scope {
+    padding: var(--sp-4);
   }
   .ds-header__title {
     font-size: var(--fs-xl);

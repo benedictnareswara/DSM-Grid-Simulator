@@ -121,7 +121,7 @@ export default function AccountProfilePage() {
     <div className="ds-page">
       <PageHeader
         title={u.username}
-        subtitle={`${u.role} · ${u.status}`}
+        subtitle={`${u.role === "admin" ? "Operator" : "Household"} account, ${u.status}`}
         back={{ href: "/admin/accounts", label: "Accounts" }}
       />
 
@@ -133,7 +133,7 @@ export default function AccountProfilePage() {
           {/* ── Profile ── */}
           <div className="ds-card ds-card--strip">
             {/*
-                No status chip here: PageHeader's subtitle prints `role · status` about 30px above
+                No status chip here: PageHeader's subtitle prints the role and status about 30px above
                 this strip, and the definition list below prints it a third time.
             */}
             <div className="ds-card__head">

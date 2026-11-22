@@ -120,7 +120,7 @@ export default function ParticipationPage() {
     <div className="ds-page">
       <PageHeader
         title="Participation log"
-        subtitle="Every household answer, attributed — one vote per household per alert"
+        subtitle="Every household answer. Each household gets one vote per alert."
       />
 
       <FilterBar

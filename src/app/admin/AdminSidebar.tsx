@@ -136,7 +136,7 @@ export function AdminSidebar() {
           <BrinEmblem size={30} />
           <span className="ds-sidebar__wordmark">
             DSM Grid
-            <span>Operator console · BRIN</span>
+            <span>Operator console</span>
           </span>
         </div>
 
@@ -190,7 +190,7 @@ export function AdminSidebar() {
             <span className="ds-sidebar__statvalue">
               {householdCount}
               {consumerCount !== householdCount && (
-                <span className="ds-sidebar__statsub"> · {consumerCount} apps</span>
+                <span className="ds-sidebar__statsub"> on {consumerCount} devices</span>
               )}
             </span>
           </div>

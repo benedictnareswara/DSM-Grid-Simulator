@@ -1,7 +1,4 @@
-/**
- * DSM — colour scheme preference.
- * @media (prefers-color-scheme: dark) { :root:not([data-theme=light]) { … } }
- */
+/** Colour scheme preference: light, dark, or follow the system. */
 
 export type ThemePreference = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
@@ -14,7 +11,7 @@ const DARK_QUERY = "(prefers-color-scheme: dark)";
 /** Must match `--canvas` for each scheme. */
 const THEME_COLOR: Record<ResolvedTheme, string> = {
   light: "#f6f6f7",
-  dark: "#0e0e0f",
+  dark: "#0d141b",
 };
 
 const listeners = new Set<() => void>();

@@ -35,41 +35,19 @@
   }
 }
 
-/* ── The drawn panel ── Three layers: a gradient mesh, an animated trace, and a readout. */
+/* ── The drawn panel ── The dashboard's frequency scope at rest: a graticule, the permitted band
+   and one trace that draws itself once on load. */
 .ds-artwork {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: var(--sp-5);
   padding: var(--sp-8);
-}
-
-/*
- * Four offset radial gradients in BRIN's pair: the logo red twice at different radii so the field
- * has depth, charcoal once to ground it, and a dark pool to sit the readout on.
- */
-.ds-artwork__mesh {
-  position: absolute;
-  inset: 0;
   background:
-    radial-gradient(
-      60% 55% at 20% 20%,
-      color-mix(in srgb, var(--brand-red) 45%, transparent) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      50% 50% at 80% 30%,
-      color-mix(in srgb, var(--brand-red) 24%, transparent) 0%,
-      transparent 72%
-    ),
-    radial-gradient(
-      45% 45% at 72% 78%,
-      color-mix(in srgb, var(--brand-ink) 22%, transparent) 0%,
-      transparent 70%
-    ),
-    linear-gradient(160deg, var(--surface-2) 0%, var(--surface-3) 100%);
+    repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px 12.5%),
+    repeating-linear-gradient(0deg, var(--border) 0 1px, transparent 1px 12.5%),
+    var(--surface-2);
 }
 
 .ds-artwork__trace {
@@ -79,85 +57,59 @@
   height: 100%;
 }
 
+.ds-artwork__band {
+  fill: color-mix(in srgb, var(--ok) 8%, transparent);
+}
+
+.ds-artwork__limit {
+  stroke: var(--border-strong);
+  stroke-dasharray: 6 5;
+}
+
 .ds-artwork__wave {
   fill: none;
-  stroke: var(--text);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  /* Long segments, short gaps. */
-  stroke-dasharray: 110 55;
-  opacity: 0.22;
-  animation: ds-drift 9s linear infinite;
-}
-
-.ds-artwork__wave--2 {
   stroke: var(--accent);
-  opacity: 0.5;
-  animation-duration: 14s;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ds-trace-in 1.8s cubic-bezier(0.32, 0.72, 0, 1) 0.2s forwards;
 }
 
-.ds-artwork__wave--3 {
-  stroke: var(--brand-ink);
-  opacity: 0.4;
-  animation-duration: 20s;
-  animation-direction: reverse;
-}
-
-@keyframes ds-drift {
+@keyframes ds-trace-in {
   to {
-    stroke-dashoffset: -330;
+    stroke-dashoffset: 0;
   }
 }
 
 .ds-artwork__readout {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-3);
-  max-width: 340px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--sp-2);
 }
 
 .ds-artwork__reading {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--sp-3);
-  border-radius: var(--r);
-  /* A glass tile, so the mesh reads through it. */
-  background: color-mix(in srgb, var(--surface) 55%, transparent);
-  backdrop-filter: blur(12px);
-  border: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
-}
-
-.ds-artwork__readinglabel {
-  font-size: var(--fs-2xs);
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-.ds-artwork__readingvalue {
-  font-size: var(--fs-md);
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 9vw, 7rem);
   font-weight: 600;
-  letter-spacing: -0.02em;
+  line-height: 0.9;
   font-variant-numeric: tabular-nums;
 }
 
-.ds-artwork__strap {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--text);
-}
-
-.ds-artwork__strap span {
-  font-size: var(--fs-2xs);
-  font-weight: 400;
+.ds-artwork__unit {
+  font-size: var(--fs-xl);
   color: var(--text-muted);
 }
 
-/* ── Auth column ────────────────────────────────────────────────────── */
+.ds-artwork__caption {
+  flex-basis: 100%;
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
 .ds-auth {
   width: 100%;
   max-width: 400px;

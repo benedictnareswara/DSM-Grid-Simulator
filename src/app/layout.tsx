@@ -1,27 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Barlow_Semi_Condensed, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 /*
- * Fonts are self-hosted at build time by next/font (no render-blocking the weights the design
- * system uses are requested.
- * @import). They set the two CSS variables src/styles/tokens.css reads. Only
+ * Self-hosted by next/font; they set the CSS variables src/styles/tokens.css reads.
+ * Plus Jakarta Sans carries the interface; Barlow Semi Condensed, drawn from road and
+ * infrastructure signage, carries readings and headings like an instrument face.
  */
-const inter = Inter({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-inter",
+  variable: "--font-jakarta",
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const barlow = Barlow_Semi_Condensed({
   subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-jetbrains-mono",
+  weight: ["500", "600", "700"],
+  variable: "--font-barlow",
   display: "swap",
-  // Not preloaded: mono is only used for ids and timestamps (secondary text), so it shouldn't
-  // compete with first paint.
-  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -44,7 +41,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable}`}
+      className={`${jakarta.variable} ${barlow.variable}`}
       // The script below overwrites this before paint.
       data-theme="light"
       suppressHydrationWarning
@@ -61,7 +58,7 @@ var r=document.documentElement;
 r.dataset.theme=t;r.style.colorScheme=t;
 var m=document.querySelector('meta[name="theme-color"]');
 if(!m){m=document.createElement("meta");m.name="theme-color";document.head.appendChild(m);}
-m.content=t==="dark"?"#0e0e0f":"#f6f6f7";
+m.content=t==="dark"?"#0d141b":"#f6f6f7";
 }catch(e){}})()`,
           }}
         />

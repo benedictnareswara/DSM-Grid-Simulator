@@ -59,7 +59,7 @@
   --danger-border: #f5c2d2;
 
   /* Elevation. */
-  --e1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --e1: 0 0 0 1px var(--border);
   --e2: 0 4px 12px rgba(0, 0, 0, 0.08);
   --e3: 0 12px 40px rgba(0, 0, 0, 0.16);
 
@@ -68,10 +68,10 @@
   --hover-wash: rgba(16, 16, 29, 0.05);
 
   /* Radius */
-  --r-sm: 8px;
-  --r: 12px;
-  --r-lg: 16px;
-  --r-xl: 24px;
+  --r-sm: 6px;
+  --r: 8px;
+  --r-lg: 10px;
+  --r-xl: 14px;
   --r-full: 999px;
 
   /* Type scale */
@@ -112,9 +112,9 @@
   --rail-w: 248px;
   --rail-w-collapsed: 68px;
 
-  --font: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  --mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --font: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Readings and headings: an instrument-face condensed grotesk. */
+  --font-display: var(--font-barlow), "Arial Narrow", sans-serif;
 }
 
 /* Scheme-independent tokens. */
@@ -139,26 +139,21 @@
    Nothing but token values. If a component rule needs editing to work in
    dark, the rule is carrying a colour it should have taken from a token.
 
-   Two things genuinely change shape rather than value:
-     - `--e1` becomes a hairline ring. A drop shadow is invisible on black,
-       so the token that separates a card from the canvas has to do it with
-       a line instead — which is why every surface reads `--e1` rather than
-       declaring its own border.
-     - The severity and status `-soft` fills become alpha washes of their
-       own hue. The light tints are near-white and do not survive
-       inversion; an alpha wash sits correctly on whatever is behind it.
+   A deep slate rather than near-black: the night shift in a control room.
+   The severity and status `-soft` fills become alpha washes of their own
+   hue, since the light tints are near-white and do not survive inversion.
    ═══════════════════════════════════════════════════════════════════════ */
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --canvas: #0e0e0f;
-  --surface: #18181a;
-  --surface-2: #212124;
-  --surface-3: #2c2c30;
+  --canvas: #0d141b;
+  --surface: #141d26;
+  --surface-2: #1b2631;
+  --surface-3: #253240;
 
-  --text: #f3f3f4;
-  --text-muted: #a6a6ad;
-  --text-faint: #8b8b93;
+  --text: #eef2f5;
+  --text-muted: #a3b2bf;
+  --text-faint: #8597a7;
   --text-on-accent: #ffffff;
 
   --border: rgba(255, 255, 255, 0.1);
@@ -169,7 +164,7 @@
    * labels keep theirs.
    */
   --brand-red: #ff0d00;
-  --brand-ink: #f3f3f4;
+  --brand-ink: #eef2f5;
   --accent: #ff6359;
   --accent-hover: #ff8077;
   --accent-fill: #e0261c;
@@ -193,7 +188,7 @@
 
   /*
    * Dark inverts which half of the ok pair is readable: here the lime *is* legible as text on a
-   * near-black surface, so --ok and --ok-solid converge.
+   * dark surface, so --ok and --ok-solid converge.
    */
   --ok: #a3e635;
   --ok-hover: #b8ee5f;

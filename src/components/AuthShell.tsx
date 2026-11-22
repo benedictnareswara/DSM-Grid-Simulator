@@ -15,7 +15,6 @@ export function AuthShell({
         <div className="ds-auth">
           <header className="ds-auth__brand">
             <BrinEmblem size={56} className="ds-auth__partner" />
-            <p className="ds-eyebrow">Demand Side Management</p>
             <h1 className="ds-auth__title">DSM Grid</h1>
             <p className="ds-header__sub">{subtitle}</p>
             <p className="ds-auth__collab">
@@ -33,54 +32,29 @@ export function AuthShell({
   );
 }
 
-/** The panel's contents. */
+// A frequency trace that wanders inside its band, drawn once when the page loads.
+const TRACE = Array.from({ length: 61 }, (_, i) => {
+  const x = i * 10;
+  const y = 200 + 34 * Math.sin(i / 4.2) + 14 * Math.sin(i / 1.7 + 1) + 6 * Math.sin(i * 1.3);
+  return `${i ? "L" : "M"}${x},${y.toFixed(1)}`;
+}).join("");
+
+/** The panel: the dashboard's frequency scope, at rest. */
 function GridArtwork() {
   return (
     <div className="ds-artwork">
-      <div className="ds-artwork__mesh" />
-
-      <svg
-        className="ds-artwork__trace"
-        viewBox="0 0 600 400"
-        preserveAspectRatio="xMidYMid slice"
-        fill="none"
-      >
-        {/* Three passes of the same wave at different amplitudes and speeds. */}
-        <path
-          className="ds-artwork__wave ds-artwork__wave--1"
-          d="M-50 200 Q 25 120 100 200 T 250 200 T 400 200 T 550 200 T 700 200"
-        />
-        <path
-          className="ds-artwork__wave ds-artwork__wave--2"
-          d="M-50 230 Q 50 180 150 230 T 350 230 T 550 230 T 750 230"
-        />
-        <path
-          className="ds-artwork__wave ds-artwork__wave--3"
-          d="M-50 170 Q 60 235 170 170 T 390 170 T 610 170"
-        />
+      <svg className="ds-artwork__trace" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid slice">
+        <rect className="ds-artwork__band" x="0" y="130" width="600" height="140" />
+        <line className="ds-artwork__limit" x1="0" x2="600" y1="130" y2="130" />
+        <line className="ds-artwork__limit" x1="0" x2="600" y1="270" y2="270" />
+        <path className="ds-artwork__wave" d={TRACE} pathLength={1} />
       </svg>
 
-      {/* The six parameters, as the console would print them. */}
-      <div className="ds-artwork__readout">
-        <Reading label="Frequency" value="50.00 Hz" />
-        <Reading label="Reserve" value="18.4%" />
-        <Reading label="Peak load" value="1.24×" />
-        <Reading label="Renewables" value="31.5%" />
-      </div>
-
-      <p className="ds-artwork__strap">
-        220V · 50Hz
-        <span>Neighborhood scale</span>
+      <p className="ds-artwork__readout">
+        <span className="ds-artwork__reading">50.00</span>
+        <span className="ds-artwork__unit">Hz</span>
+        <span className="ds-artwork__caption">Grid frequency, allowed 50 ± 0.20 Hz</span>
       </p>
     </div>
-  );
-}
-
-function Reading({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="ds-artwork__reading">
-      <span className="ds-artwork__readinglabel">{label}</span>
-      <span className="ds-artwork__readingvalue">{value}</span>
-    </span>
   );
 }

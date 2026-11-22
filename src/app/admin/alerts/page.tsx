@@ -14,16 +14,16 @@ const LIMIT = 50;
 
 /** How a persisted row's outcome reads in the table. */
 const OUTCOME_LABEL: Record<AlertOutcome, { text: string; tone: string }> = {
-  sending: { text: "sending…", tone: "ds-tag--sending" },
-  pushed: { text: "delivered", tone: "ds-tag--ok" },
-  "auto-pushed": { text: "auto-delivered", tone: "ds-tag--ok" },
-  "failed-gateway": { text: "not delivered", tone: "ds-tag--bad" },
-  ignored: { text: "ignored", tone: "" },
+  sending: { text: "Sending…", tone: "ds-tag--sending" },
+  pushed: { text: "Delivered", tone: "ds-tag--ok" },
+  "auto-pushed": { text: "Auto-delivered", tone: "ds-tag--ok" },
+  "failed-gateway": { text: "Not delivered", tone: "ds-tag--bad" },
+  ignored: { text: "Ignored", tone: "" },
 };
 
 function OutcomeCell({ alert }: { alert: PersistedAlert }) {
   // null is pending — nobody has acted on it yet.
-  if (!alert.outcome) return <span className="ds-tag">pending</span>;
+  if (!alert.outcome) return <span className="ds-tag">Pending</span>;
   const { text, tone } = OUTCOME_LABEL[alert.outcome];
   return <span className={`ds-tag ${tone}`}>{text}</span>;
 }
@@ -79,7 +79,7 @@ export default function AlertHistoryPage() {
     <div className="ds-page">
       <PageHeader
         title="Alert history"
-        subtitle="Every alert the control logic triggered — pushed, dropped, ignored or pending"
+        subtitle="Every alert the grid raised, and what happened to it."
       />
 
       <FilterBar

@@ -343,7 +343,7 @@ export default function ConsumerApp() {
           <BrinEmblem size={30} />
           <div className="ds-app__brand">
             DSM Grid
-            <span>Energy Assistant · BRIN</span>
+            <span>Energy assistant</span>
           </div>
         </div>
         <div className="ds-header__aside">
@@ -423,7 +423,6 @@ export default function ConsumerApp() {
         {tab === "now" && (
           <>
             <div className={`ds-verdict ds-verdict--${verdict.level}`}>
-              <div className="ds-verdict__label">Right now</div>
               <div className="ds-verdict__headline">{verdict.headline}</div>
               <div className="ds-verdict__detail">{verdict.detail}</div>
               {/* Why. */}

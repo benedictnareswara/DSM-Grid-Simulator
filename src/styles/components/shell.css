@@ -433,104 +433,175 @@
   }
 }
 
-/* ── Grid status hero ───────────────────────────────────────────────────
-   The Control Room's anchor. Six gauges say what each parameter is doing;
-   none of them says whether that adds up to a problem, and working it out
-   meant reading all six against trip points held in your head.
-
-   Tinted by level rather than bordered, the same idiom `.ds-verdict` uses on
-   the consumer side — this is that block's operator twin, and the two should
-   read as the same kind of statement.
+/* ── Grid scope ─────────────────────────────────────────────────────────
+   The Control Room opens on frequency traced against its permitted band.
+   The top rule carries the grid state; the trace turns red outside the band.
    ────────────────────────────────────────────────────────────────────── */
-.ds-hero {
+.ds-scope {
+  --level: var(--border-strong);
+  display: grid;
+  gap: var(--sp-5);
+  padding: var(--sp-6);
+  border-top: 4px solid var(--level);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--e1);
+}
+
+.ds-scope--stable {
+  --level: var(--ok);
+}
+
+.ds-scope--watch {
+  --level: var(--sev-warning);
+}
+
+.ds-scope--strained {
+  --level: var(--sev-critical);
+}
+
+.ds-scope--contingency {
+  --level: var(--sev-emergency);
+}
+
+.ds-scope__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--sp-5);
-  padding: var(--sp-6);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: var(--e1);
 }
 
-.ds-hero--stable {
-  background: var(--ok-soft);
-  box-shadow: none;
-}
-
-.ds-hero--watch {
-  background: var(--sev-warning-soft);
-  box-shadow: none;
-}
-
-.ds-hero--strained {
-  background: var(--sev-critical-soft);
-  box-shadow: none;
-}
-
-.ds-hero--contingency {
-  background: var(--sev-emergency-soft);
-  box-shadow: none;
-}
-
-.ds-hero--unknown {
-  background: var(--surface-2);
-  box-shadow: none;
-}
-
-.ds-hero__main {
-  min-width: 0;
+.ds-scope__verdict {
   flex: 1 1 320px;
-  display: flex;
-  flex-direction: column;
+  min-width: 0;
+  display: grid;
   gap: var(--sp-1);
 }
 
-.ds-hero__label {
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.ds-hero__headline {
-  font-size: var(--fs-3xl);
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 1.1;
-}
-
-.ds-hero__detail {
-  max-width: 60ch;
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
-  line-height: 1.55;
-}
-
-.ds-hero__cause {
-  margin-top: var(--sp-1);
-  font-size: var(--fs-xs);
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-/* Run state. */
-.ds-hero__run {
-  flex: 0 1 260px;
+.ds-scope__run {
+  flex: 0 1 240px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--sp-2);
 }
 
+.ds-scope__body {
+  display: grid;
+  grid-template-columns: minmax(170px, 220px) 1fr;
+  align-items: center;
+  gap: var(--sp-6);
+}
+
+.ds-scope__readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--sp-2);
+}
+
+.ds-scope__reading {
+  font-size: clamp(3rem, 6vw, 4.25rem);
+  font-weight: 600;
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-scope__unit {
+  font-size: var(--fs-lg);
+  color: var(--text-muted);
+}
+
+.ds-scope__caption {
+  flex-basis: 100%;
+  margin-top: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+/* The screen: a faint graticule, one division per sixth of the window. */
+.ds-scope__screen {
+  position: relative;
+  height: 150px;
+  border-radius: var(--r);
+  background:
+    repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px calc(100% / 6)),
+    var(--surface-2);
+  overflow: hidden;
+}
+
+.ds-scope__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ds-scope__band {
+  fill: color-mix(in srgb, var(--ok) 9%, transparent);
+}
+
+.ds-scope__limit,
+.ds-scope__nominal {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.ds-scope__limit {
+  stroke-dasharray: 5 4;
+}
+
+.ds-scope__nominal {
+  stroke: var(--border);
+}
+
+.ds-scope__trace {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.ds-scope__trace--out {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.ds-scope__tag {
+  position: absolute;
+  right: var(--sp-2);
+  transform: translateY(-50%);
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-hero__headline {
+  font-size: var(--fs-3xl);
+  font-weight: 600;
+  line-height: 1.05;
+}
+
+.ds-hero__detail {
+  max-width: 68ch;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
 .ds-hero__tick {
   font-size: var(--fs-lg);
   font-weight: 600;
-  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
 .ds-hero__tick span {
+  font-family: var(--font);
   font-size: var(--fs-sm);
   font-weight: 400;
   color: var(--text-muted);
@@ -542,10 +613,93 @@
   font-variant-numeric: tabular-nums;
 }
 
-.ds-hero__run /* Half height, for a bar that is a readout rather than the subject — the
-   hero's run progress sits under a figure that already states it. */
-.ds-progress--slim {
+.ds-scope__run .ds-progress--slim {
   height: 4px;
+}
+
+/* ── Gauge rail ─────────────────────────────────────────────────────────
+   Six signals in one strip, each with a bar measured against its own limit.
+   The tick on the bar is the limit; the bar runs on past it to 125%.
+   ────────────────────────────────────────────────────────────────────── */
+.ds-gauges {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--e1);
+  overflow: hidden;
+}
+
+.ds-gauge {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  min-width: 0;
+}
+
+.ds-gauge + .ds-gauge {
+  border-left: 1px solid var(--border);
+}
+
+.ds-gauge__label {
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.ds-gauge__value {
+  font-size: var(--fs-2xl);
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-gauge__bar {
+  position: relative;
+  height: 4px;
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+}
+
+.ds-gauge__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--text-faint);
+  transition: width var(--t-fast);
+}
+
+.ds-gauge__mark {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--text-muted);
+}
+
+.ds-gauge__limit {
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+}
+
+.ds-gauge--near .ds-gauge__fill {
+  background: var(--sev-warning);
+}
+
+.ds-gauge--over {
+  background: var(--sev-critical-soft);
+}
+
+.ds-gauge--over .ds-gauge__fill {
+  background: var(--sev-critical);
+}
+
+.ds-gauge--over .ds-gauge__value,
+.ds-gauge--over .ds-gauge__limit {
+  color: var(--sev-critical);
 }
 
 .ds-progress {

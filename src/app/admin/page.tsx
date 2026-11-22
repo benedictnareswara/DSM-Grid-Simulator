@@ -22,10 +22,9 @@ import { getOperatorVerdict, trippedCount } from "./verdict";
 import { useAdminSocket } from "./GridSocketProvider";
 import { AlertRow, isFailed, keyOf } from "./AlertRow";
 import { useAlertOutcomes } from "./useAlertOutcomes";
-import { Metric } from "@/components/Metric";
+import { GaugeRail, GridScope } from "./GridScope";
 import { Icon } from "@/components/Icon";
 import {
-  PARAMETER_CONFIGS,
   type DSMAlert,
   type DSMResponse,
   type SimulationPhase,
@@ -54,14 +53,6 @@ const TestAlertPanel = dynamic(
 const ResetConfirm = dynamic(() => import("./ResetConfirm").then((m) => m.ResetConfirm), {
   ssr: false,
 });
-
-/** Human-readable run state. */
-const PHASE_LABEL: Record<SimulationPhase, string> = {
-  idle: "Ready",
-  running: "Running",
-  paused: "Paused",
-  finished: "Finished",
-};
 
 export default function AdminDashboard() {
   const { isAuthenticated, role, isLoading } = useAuth();
@@ -346,8 +337,8 @@ export default function AdminDashboard() {
   return (
     <div className="ds-page">
       <PageHeader
-        title="Control Room"
-        subtitle="6-parameter monitoring · Indonesian PLN Grid"
+        title="Control room"
+        subtitle="Six grid signals for one PLN neighbourhood, replayed a minute at a time."
       />
 
       {/*
@@ -477,74 +468,17 @@ export default function AdminDashboard() {
 
       </div>
 
-      {/* ── Grid status ── The anchor for the page. */}
-      <section className={`ds-hero ds-hero--${verdict.level}`}>
-        <div className="ds-hero__main">
-          <p className="ds-hero__label">Grid status</p>
-          <h2 className="ds-hero__headline">{verdict.headline}</h2>
-          <p className="ds-hero__detail">{verdict.detail}</p>
-          {verdict.cause && (
-            <p className="ds-hero__cause">
-              Because {verdict.cause}
-              {tripped > 1 && ` · ${tripped} parameters over the line`}.
-            </p>
-          )}
-        </div>
+      <GridScope
+        history={history}
+        gridState={gridState}
+        thresholds={thresholds}
+        verdict={verdict}
+        tripped={tripped}
+        phase={phase}
+        status={status}
+      />
 
-        <div className="ds-hero__run">
-          <span className={`ds-statusline__state ds-statusline__state--${phase}`}>
-            {PHASE_LABEL[phase]}
-          </span>
-          {status ? (
-            <>
-              <span className="ds-hero__tick">
-                tick {status.current_tick.toLocaleString()}
-                <span> of {status.total_ticks.toLocaleString()}</span>
-              </span>
-              <div
-                className="ds-progress ds-progress--slim"
-                role="progressbar"
-                aria-valuenow={Math.round(status.progress_pct)}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label="Run progress"
-              >
-                <div
-                  className="ds-progress__fill"
-                  style={{ width: `${status.progress_pct}%` }}
-                />
-              </div>
-              <span className="ds-hero__stamp">
-                {status.progress_pct.toFixed(1)}%
-                {gridState && ` · ${gridState.timestamp}`}
-              </span>
-            </>
-          ) : (
-            <span className="ds-hero__stamp">waiting for the backend…</span>
-          )}
-        </div>
-      </section>
-
-      {/* ── Live grid state ── First, and full width. */}
-      <div className="ds-grid ds-grid--6">
-        {PARAMETER_CONFIGS.map((config) => {
-          const value = gridState ? (gridState.parameters[config.valueKey] as number) : 0;
-          const triggered = gridState
-            ? (gridState.parameters[config.triggeredKey] as boolean)
-            : false;
-
-          return (
-            <Metric
-              key={config.key}
-              label={config.label}
-              value={gridState ? config.format(value) : "—"}
-              // The *live* trip point, not a hardcoded one.
-              sub={config.thresholdLabel(thresholds)}
-              triggered={triggered}
-            />
-          );
-        })}
-      </div>
+      <GaugeRail gridState={gridState} thresholds={thresholds} />
 
       {/* ── Alert feed | charts ── Wider on the left: the feed is the thing with actions on it. */}
       <div className="ds-grid ds-grid--feed">
@@ -578,12 +512,12 @@ export default function AdminDashboard() {
                 </button>
               </span>
               <Link href="/admin/alerts" className="ds-card__meta ds-card__meta--link">
-                View all →
+                Alert history
               </Link>
             </span>
           </div>
 
-          <div className="ds-card__body ds-stack ds-stack--sm">
+          <div className="ds-card__body ds-feedlist">
             {visibleAlerts.length === 0 ? (
               // "Nothing here" and "history still loading" look identical to an operator, and the
               // wrong one is actively misleading — it says nothing has happened when the record
